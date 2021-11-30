@@ -1,0 +1,34 @@
+<?xml version="1.1"?>
+<launch>
+
+  <!-- Standalone example launch file for an ntrip client -->
+
+  <!-- Declare arguments with default values -->
+  <arg name="host"                   default = "20.185.11.35" />
+  <arg name="port"                   default = "2101" />
+  <arg name="mountpoint"             default = "VTRI_RTCM3" />
+  <arg name="authenticate"           default = "true" />
+  <arg name="username"               default = "user" />
+  <arg name="password"               default = "pass" />
+
+  <!-- ****************************************************************** -->
+  <!-- NTRIP Client Node -->
+  <!-- ****************************************************************** -->
+  <node name="ntrip_client_node" pkg="ntrip_client" type="ntrip_ros.py" output="screen" ns="ntrip_client">
+
+    <!-- Required parameters used to connect to the NTRIP server -->
+    <param name="host"       value="$(arg host)" />
+    <param name="port"       value="$(arg port)" />
+    <param name="mountpoint" value="$(arg mountpoint)" />
+
+    <!-- If this is set to true, we will read the username and password and attempt to authenticate. If not, we will attempt to connect unauthenticated -->
+    <param name="authenticate" value="$(arg authenticate)" />
+
+    <!-- If authenticate is set to true, we will use these to authenticate with the server -->
+    <param name="username" value="$(arg username)" />
+    <param name="password" value="$(arg password)" />
+
+    <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages publishe by this node -->
+    <param name="rtcm_frame_id" value="odom" />
+  </node>
+</launch>
