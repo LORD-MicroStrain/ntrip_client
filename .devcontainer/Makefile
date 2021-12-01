@@ -30,7 +30,7 @@ group_id := $(shell id -g)
 dev_dockerfile := $(docker_dir)/Dockerfile.dev
 build_args := --build-arg http_proxy --build-arg https_proxy --build-arg no_proxy --build-arg ARCH=$(arch) --build-arg ROS_VERSION=$(ros_version) --build-arg USER_ID=$(user_id) --build-arg GROUP_ID=$(group_id)
 run_args := -e http_proxy -e https_proxy -e no_proxy
-run_mounts := -v "$(project_dir):$(docker_catkin_src_dir)" -v "$(build_dir):$(docker_catkin_build_dir)" -v "$(devel_dir):$(docker_catkin_devel_dir)"
+run_mounts := -v "$(project_dir):$(docker_catkin_src_dir)/$(project_name)" -v "$(build_dir):$(docker_catkin_build_dir)" -v "$(devel_dir):$(docker_catkin_devel_dir)"
 dev_image_name := $(arch)/$(project_name)-dev:$(ros_version)
 dev_image_artifact := $(artifacts_dir)/.image
 
@@ -49,6 +49,7 @@ build-shell: $(dev_image_artifact)
 		-it \
 		--rm \
 		--privileged \
+		--net="host" \
 		--user "microstrain" \
 		-w $(docker_catkin_root) \
 		--entrypoint="/bin/bash" \
