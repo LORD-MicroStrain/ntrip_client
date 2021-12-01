@@ -37,6 +37,7 @@ class NTRIPRos:
     self._rtcm_frame_id = rospy.get_param('~rtcm_frame_id', 'odom')
 
     # Setup the RTCM publisher
+    self._rtcm_timer = None
     self._rtcm_pub = rospy.Publisher('rtcm', RTCM, queue_size=10)
 
     # Initialize the client
