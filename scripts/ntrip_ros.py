@@ -14,18 +14,9 @@ class NTRIPRos:
   def __init__(self):
     # Init the node and read some mandatory config
     rospy.init_node('ntrip_client', anonymous=True)
-    host = rospy.get_param('~host', None)
-    if host is None:
-      rospy.logerr('Missing required param "host"')
-      sys.exit(1)
-    port = rospy.get_param('~port', None)
-    if port is None:
-      rospy.logerr('Missing required param "port"')
-      sys.exit(1)
-    mountpoint = rospy.get_param('~mountpoint', None)
-    if mountpoint is None:
-      rospy.logerr('Missing required param "mountpoint"')
-      sys.exit(1)
+    host = rospy.get_param('~host', '127.0.0.1')
+    port = rospy.get_param('~port', '2101')
+    mountpoint = rospy.get_param('~mountpoint', 'mount')
 
     # If we were asked to authenticate, read the username and password
     username = None

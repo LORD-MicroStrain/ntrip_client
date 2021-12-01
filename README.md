@@ -8,8 +8,8 @@ messages and sending them to the NTRIP server
 #### Important Branches
 There are two important branches that you may want to checkout:
 
-* [ros](https://github.com/LORD-MicroStrain/ROS-MSCL/tree/ros) -- Contains ROS1 implementation for this node.
-* [ros2](https://github.com/LORD-MicroStrain/ROS-MSCL/tree/ros2) -- Contains ROS2 implementation for this node.
+* [ros](https://github.com/LORD-MicroStrain/ntrip_client/tree/ros) -- Contains ROS1 implementation for this node.
+* [ros2](https://github.com/LORD-MicroStrain/ntrip_client/tree/ros2) -- Contains ROS2 implementation for this node.
 
 ## Build Instructions
 
