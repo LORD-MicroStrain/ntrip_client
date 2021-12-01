@@ -30,17 +30,8 @@ class NTRIPRos(Node):
 
     # Read some mandatory config
     host = self.get_parameter('host').value
-    if host is None:
-      self.get_logger().error('Missing required param "host"')
-      sys.exit(1)
     port = self.get_parameter('port').value
-    if port is None:
-      self.get_logger().error('Missing required param "port"')
-      sys.exit(1)
     mountpoint = self.get_parameter('mountpoint').value
-    if mountpoint is None:
-      self.get_logger().error('Missing required param "mountpoint"')
-      sys.exit(1)
 
     # If we were asked to authenticate, read the username and password
     username = None
@@ -48,11 +39,11 @@ class NTRIPRos(Node):
     if self.get_parameter('authenticate').value:
       username = self.get_parameter('username').value
       password = self.get_parameter('password').value
-      if username is None:
+      if not username:
         self.get_logger().error(
           'Requested to authenticate, but param "username" was not set')
         sys.exit(1)
-      if password is None:
+      if not password:
         self.get_logger().error(
           'Requested to authenticate, but param "password" was not set')
         sys.exit(1)
@@ -108,7 +99,7 @@ class NTRIPRos(Node):
       print("Publishing RTCM")
       self._rtcm_pub.publish(RTCM(
         header=Header(
-          stamp=rospy.Time.now(),
+          stamp=self.get_clock().now().to_msg(),
           frame_id=self._rtcm_frame_id
         ),
         data=raw_rtcm

@@ -8,13 +8,13 @@ messages and sending them to the NTRIP server
 #### Important Branches
 There are two important branches that you may want to checkout:
 
-* [ros](https://github.com/LORD-MicroStrain/ROS-MSCL/tree/ros) -- Contains ROS1 implementation for this node.
-* [ros2](https://github.com/LORD-MicroStrain/ROS-MSCL/tree/ros2) -- Contains ROS2 implementation for this node.
+* [ros](https://github.com/LORD-MicroStrain/ntrip_client/tree/ros) -- Contains ROS1 implementation for this node.
+* [ros2](https://github.com/LORD-MicroStrain/ntrip_client/tree/ros2) -- Contains ROS2 implementation for this node.
 
 ## Build Instructions
 
 #### Building from source
-1. Install ROS and create a workspace: [Installing and Configuring Your ROS Environment](http://wiki.ros.org/ROS/Tutorials/InstallingandConfiguringROSEnvironment)
+1. Install ROS2 and create a workspace: [Installing and Configuring Your ROS2 Environment](https://docs.ros.org/en/foxy/Tutorials/Configuring-ROS2-Environment.html)
 
 2. Move the entire ntrip_client folder to the your_workspace/src directory.
 
@@ -23,15 +23,15 @@ There are two important branches that you may want to checkout:
 4. Build your workspace:
     ```bash
     cd ~/your_workspace
-    catkin_make
-    source ~/your_workspace/devel/setup.bash
+    colcon build
+    source ~/your_workspace/install/setup.bash
     ```        
     The source command may need to be run in each terminal prior to launching a ROS node.
 
 #### Launch the node and publish data
 The following command will launch the node. Keep in mind each instance needs to be run in a separate terminal.
 ```bash
-roslaunch ntrip_client ntrip_client.launch
+ros2 launch ntrip_client ntrip_client_launch.py
 ```
 
 Optional launch parameters:
