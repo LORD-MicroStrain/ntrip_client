@@ -1,0 +1,33 @@
+{
+    "name": "amd64/ntrip_client-dev:noetic",
+    "build": {
+        "context": "..",
+        "dockerfile": "Dockerfile.dev",
+        "args": {
+            "ARCH": "amd64",
+            "ROS_VERSION": "melodic",
+            "USER_ID": "1000",
+            "GROUP_ID": "1000"
+        }
+    },
+    "extensions": [
+        "ms-iot.vscode-ros",
+        "ms-python.python",
+        "ms-vscode.cmake-tools"
+    ],
+    "containerUser": "root",
+    "remoteUser": "microstrain",
+    "runArgs": [
+        "--net=host",
+        "--privileged",
+        "--security-opt", "seccomp=unconfined"
+    ],
+    "settings": {},
+    "postCreateCommand": "sudo apt-get update && rosdep install --from-paths ~/catkin_ws/src --ignore-src -r -y",
+    "mounts": [
+        "source=${localWorkspaceFolder},target=/home/microstrain/catkin_ws/src/ntrip_client,type=bind,consistency=cached",
+        "source=${localWorkspaceFolder}/.devcontainer/.vscode-docker,target=/home/microstrain/catkin_ws/.vscode,type=bind,consistency=cached",
+    ],
+    "workspaceMount": "",
+    "workspaceFolder": "/home/microstrain/catkin_ws"
+}

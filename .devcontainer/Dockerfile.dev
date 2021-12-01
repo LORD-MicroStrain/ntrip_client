@@ -1,0 +1,38 @@
+ARG ARCH="amd64"
+ARG ROS_VERSION="noetic"
+FROM ${ARCH}/ros:${ROS_VERSION}-ros-base
+
+# Install some general tools not installed by rosdep
+ENV DEBIAN_FRONTEND="noninteractive"
+RUN set -ex \
+    && apt-get update && apt-get install -y \
+        gdb \
+        git \
+        vim \
+        bash-completion
+
+# Add a user that will be used when shelling into this container and allow them to use devices
+ARG USER_ID=1000
+ARG GROUP_ID=1000
+RUN set -ex \
+    && groupadd -g ${USER_ID} microstrain \
+    && useradd \
+        -N \
+        -m \
+        -u ${USER_ID} \
+        -g ${GROUP_ID} \
+        -s "/bin/bash" \
+        microstrain \
+    && echo 'microstrain ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
+
+# Make the directory where we will mount all the files into and build a single time
+USER microstrain
+RUN echo "source /opt/ros/\${ROS_DISTRO}/setup.bash" >> ${HOME}/.bashrc
+RUN echo "source /usr/share/bash-completion/bash_completion" >> ${HOME}/.bashrc
+RUN echo "source /etc/bash_completion" >> ${HOME}/.bashrc
+RUN mkdir -p "${HOME}/catkin_ws/src"
+RUN mkdir -p "${HOME}/catkin_ws/build"
+RUN mkdir -p "${HOME}/catkin_ws/devel"
+
+# Initialize rosdep
+RUN rosdep update --rosdistro "${ROS_DISTRO}"
