@@ -35,10 +35,10 @@ roslaunch ntrip_client ntrip_client.launch
 ```
 
 Optional launch parameters:
-- **host**: Hostname or IP address of the NTRIP server to connect to and receive corrections from
+- **host**: Hostname or IP address of the NTRIP server to connect to.
 - **port**: Port to connect to on the server. Default: `2101`
-- **mountpoint**: Mountpoint to connect to on the NTRIP server
-- **authenticate**: Whether or not to authenticate with the server, or send an unauthenticated request. If set to true, `username`, and `password` must be supplied.
+- **mountpoint**: Mountpoint to connect to on the NTRIP server.
+- **authenticate**: Whether to authenticate with the server, or send an unauthenticated request. If set to true, `username`, and `password` must be supplied.
 - **username**: Username to use when authenticating with the NTRIP server. Only used if `authenticate` is true
 - **password**: Password to use when authenticating with the NTRIP server. Only used if `authenticate` is true
 
