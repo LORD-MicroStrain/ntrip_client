@@ -1,6 +1,6 @@
 import logging
 
-_RTCM_PREAMBLE = 0b11010011
+_RTCM_3_2_PREAMBLE = 0b11010011
 _RTCM_CRC_LOOKUP = [
   0x000000, 0x864CFB, 0x8AD50D, 0x0C99F6, 0x93E6E1, 0x15AA1A, 0x1933EC, 0x9F7F17,
   0xA18139, 0x27CDC2, 0x2B5434, 0xAD18CF, 0x3267D8, 0xB42B23, 0xB8B2D5, 0x3EFE2E,
@@ -36,6 +36,9 @@ _RTCM_CRC_LOOKUP = [
   0x42FA2F, 0xC4B6D4, 0xC82F22, 0x4E63D9, 0xD11CCE, 0x575035, 0x5BC9C3, 0xDD8538
 ]
 
+# If we find the beginning of a packet, but not the end, we will cache up to this number of bytes
+_MAX_BUFFER_SIZE = 1024 * 10
+
 class RTCMParser:
   
   def __init__(self, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
@@ -45,34 +48,67 @@ class RTCMParser:
     self._loginfo = loginfo
     self._logdebug = logdebug
 
+    # Empty buffer, will be filled out
+    self._caching_data = False
+    self._buffer = b''
+
   def parse(self, buffer):
+    # Add any data that we have cached
+    if self._caching_data:
+      combined_buffer = self._buffer + buffer
+    else:
+      combined_buffer = buffer
+
     # Loop over the passed buffer, and parse all available RTCM packets
     index = 0
     rtcm_packets = []
-    while index < len(buffer) - 2:
-      # Find the start of the RTCM packet
-      if buffer[index] == _RTCM_PREAMBLE:
-        message_length = (buffer[index + 1] << 8 | buffer[index + 2]) & 0x03FF
+    while index < len(combined_buffer):
+      # Find the start of the RTCM 3.2 packet
+      if combined_buffer[index] == _RTCM_3_2_PREAMBLE:
+        # Make sure we have enough data to find the length
+        if len(combined_buffer) <= index + 2:
+          self._logdebug('Found beginning of RTCM packet at {}, but there is not enough data in the buffer to find the message length'.format(index))
+          self._caching_data = True
+          buffer = buffer[index:]
+          break
+
         # Make sure we have enough data in the packet to validate it
-        if index + message_length + 6 <= len(buffer):
+        message_length = (combined_buffer[index + 1] << 8 | combined_buffer[index + 2]) & 0x03FF
+        if index + message_length + 6 <= len(combined_buffer):
           # Grab the packet from the buffer, and verify that it is valid by comparing checksums
-          packet = buffer[index:index + message_length + 6]
+          packet = combined_buffer[index:index + message_length + 6]
           expected_checksum = packet[-3] << 16 | packet[-2] << 8 | packet[-1]
           actual_checksum = self._checksum(packet[:-3])
           if expected_checksum == actual_checksum:
             self._logdebug('Found valid packet at {} with length {}'.format(index, message_length))
             rtcm_packets.append(packet)
             index += message_length + 6
+
+            # Remove the packet we just found from the cached buffer
+            self._caching_data = False
+            self._buffer = self._buffer[message_length + 5:]
             continue
           else:
             self._logwarn('Found packet, but checksums didn\'t match')
             self._logwarn('Expected Checksum: 0x{:X}'.format(expected_checksum))
             self._logwarn('Actual Checksum:   0x{:X}'.format(actual_checksum))
         else:
-          self._logwarn('Found beginning of RTCM packet, but there is not enough data in the buffer to extract it')
+          self._logdebug('Found beginning of RTCM packet at {}, but there is not enough data in the buffer to extract it, caching'.format(index))
+          self._caching_data = True
 
       # If we didn't find a message, manually move on to the next byte
       index += 1
+
+    # If we didn't find a full packet, cache this one for next time
+    if self._caching_data:
+      self._buffer += buffer
+
+      # Throw away old data if we are at our limit
+      if len(self._buffer) > _MAX_BUFFER_SIZE:
+        self._logwarn("Too much data buffered, trimming to {} bytes.".format(_MAX_BUFFER_SIZE))
+        self._buffer = self._buffer[:_MAX_BUFFER_SIZE]
+
+    # Return the RTCM packets we found
     return rtcm_packets
     
   def _checksum(self, packet):

@@ -149,7 +149,7 @@ class NTRIPClient:
     self._logdebug('Read {} bytes'.format(len(data)))
 
     # Send the data to the RTCM parser to parse it
-    return self._rtcm_parser.parse(data)
+    return self._rtcm_parser.parse(data) if data else []
 
   def _form_request(self):
     request_str = 'GET /{} HTTP/1.0\r\nNtrip-Version\r\nUser-Agent: NTRIP ntrip_client_ros\r\n'.format(
