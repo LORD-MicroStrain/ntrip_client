@@ -95,7 +95,6 @@ class NTRIPRos(Node):
 
   def publish_rtcm(self):
     for raw_rtcm in self._client.recv_rtcm():
-      # print("Publishing RTCM")
       self._rtcm_pub.publish(RTCM(
         header=Header(
           stamp=self.get_clock().now().to_msg(),
