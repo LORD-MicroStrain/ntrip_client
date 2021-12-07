@@ -9,7 +9,7 @@ def generate_launch_description():
             DeclareLaunchArgument('host',         default_value='20.185.11.35'),
             DeclareLaunchArgument('port',         default_value='2101'),
             DeclareLaunchArgument('mountpoint',   default_value='VTRI_RTCM3'),
-            DeclareLaunchArgument('authenticate', default_value='true'),
+            DeclareLaunchArgument('authenticate', default_value='True'),
             DeclareLaunchArgument('username',     default_value='user'),
             DeclareLaunchArgument('password',     default_value='pass'),
 
@@ -40,10 +40,9 @@ def generate_launch_description():
                    }
                  ],
                  # Uncomment the following section and replace "/gq7/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested
-                 '''
-                 remappings=[
-                   ("/ntrip_client/nmea", "/gx5/nmea/sentence")
-                 ],
-                 '''
+                #  remappings=[
+                #    ("/ntrip_client/nmea", "/gx5/nmea/sentence")
+                #  ],
+                #  
            )
       ])
