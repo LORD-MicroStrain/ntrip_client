@@ -72,7 +72,6 @@ class NTRIPRos(Node):
     if not self._client.connect():
       self.get_logger().error('Unable to connect to NTRIP server')
       return False
-
     # Setup our subscriber
     self._nmea_sub = self.create_subscription(Sentence, 'nmea', self.subscribe_nmea, 10)
 
@@ -96,7 +95,7 @@ class NTRIPRos(Node):
 
   def publish_rtcm(self):
     for raw_rtcm in self._client.recv_rtcm():
-      print("Publishing RTCM")
+      # print("Publishing RTCM")
       self._rtcm_pub.publish(RTCM(
         header=Header(
           stamp=self.get_clock().now().to_msg(),
@@ -109,13 +108,19 @@ class NTRIPRos(Node):
 if __name__ == '__main__':
   # Start the node
   rclpy.init()
-  ntrip_ros = NTRIPRos()
-  if not ntrip_ros.run():
+  node = NTRIPRos()
+  if not node.run():
     sys.exit(1)
-
-  # Spin until we are shut down
-  rclpy.spin(ntrip_ros)
-
-  # Shutdown the node and stop rclpy
-  ntrip_ros.stop()
-  rclpy.shutdown()
+  try:
+    # Spin until we are shut down
+    rclpy.spin(node)
+  except KeyboardInterrupt:
+    pass
+  except BaseException as e:
+    raise e
+  finally:
+    node.stop()
+    node.destroy_node()
+    
+    # Shutdown the node and stop rclpy
+    rclpy.shutdown()
