@@ -2,7 +2,7 @@
 
 ## Description
 
-ROS node that will communicate with an NTRP server to receive RTCM connections and publish them on a ROS topic. Also works with network/VRS mountpoints by subscribing to NMEA
+ROS node that will communicate with an NTRIP server to receive RTCM connections and publish them on a ROS topic. Also works with network/VRS mountpoints by subscribing to NMEA
 messages and sending them to the NTRIP server
 
 #### Important Branches
