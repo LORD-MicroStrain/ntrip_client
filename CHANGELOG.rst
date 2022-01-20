@@ -2,6 +2,11 @@
 Changelog for package ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+------------------
+* Replaces ROS timer destroy methods with ROS2 methods and removes extra destroy
+* Contributors: robbiefish
+
 1.0.0 (2021-12-09)
 ------------------
 * Initial implementation of ROS2 NTRIP client
