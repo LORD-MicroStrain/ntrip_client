@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <package format="2">
   <name>ntrip_client</name>
-  <version>1.0.0</version>
+  <version>1.0.1</version>
   <description>NTRIP client that will publish RTCM corrections to a ROS topic, and optionally subscribe to NMEA messages to send to an NTRIP server</description>
   <author>Parker Hannifin Corp</author>
   <maintainer email="rob.fisher@parker.com">Rob Fisher</maintainer>
