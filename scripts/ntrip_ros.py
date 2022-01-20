@@ -82,8 +82,8 @@ class NTRIPRos(Node):
   def stop(self):
     self.get_logger().info('Stopping RTCM publisher')
     if self._rtcm_timer:
-      self._rtcm_timer.shutdown()
-      self._rtcm_timer.join()
+      self._rtcm_timer.cancel()
+      self._rtcm_timer.destroy()
     self.get_logger().info('Disconnecting NTRIP client')
     self._client.disconnect()
     self.get_logger().info('Shutting down node')
@@ -119,7 +119,6 @@ if __name__ == '__main__':
     raise e
   finally:
     node.stop()
-    node.destroy_node()
     
     # Shutdown the node and stop rclpy
     rclpy.shutdown()
