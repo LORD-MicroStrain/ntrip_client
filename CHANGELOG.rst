@@ -2,8 +2,8 @@
 Changelog for package ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.0.2 (2022-02-10)
+------------------
 * Checks if there is a * character in the string before parsing fully
 * Contributors: robbiefish
 
