@@ -2,6 +2,11 @@
 Changelog for package ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Checks if there is a * character in the string before parsing fully
+* Contributors: robbiefish
+
 1.0.1 (2022-01-20)
 ------------------
 * Replaces ROS timer destroy methods with ROS2 methods and removes extra destroy
