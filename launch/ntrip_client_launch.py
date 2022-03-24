@@ -6,12 +6,13 @@ from launch_ros.actions import Node
 def generate_launch_description():
       return LaunchDescription([
             # Declare arguments with default values
-            DeclareLaunchArgument('host',         default_value='20.185.11.35'),
-            DeclareLaunchArgument('port',         default_value='2101'),
-            DeclareLaunchArgument('mountpoint',   default_value='VTRI_RTCM3'),
-            DeclareLaunchArgument('authenticate', default_value='True'),
-            DeclareLaunchArgument('username',     default_value='user'),
-            DeclareLaunchArgument('password',     default_value='pass'),
+            DeclareLaunchArgument('host',          default_value='20.185.11.35'),
+            DeclareLaunchArgument('port',          default_value='2101'),
+            DeclareLaunchArgument('mountpoint',    default_value='VTRI_RTCM3'),
+            DeclareLaunchArgument('ntrip_version', default_value=''),
+            DeclareLaunchArgument('authenticate',  default_value='True'),
+            DeclareLaunchArgument('username',      default_value='user'),
+            DeclareLaunchArgument('password',      default_value='pass'),
 
            # ****************************************************************** 
            # NTRIP Client Node
@@ -27,6 +28,9 @@ def generate_launch_description():
                      'host': LaunchConfiguration('host'),
                      'port': LaunchConfiguration('port'),
                      'mountpoint': LaunchConfiguration('mountpoint'),
+
+                     # Optional parameter that will set the NTRIP version in the initial HTTP request to the NTRIP caster.
+                     'ntrip_version': LaunchConfiguration('ntrip_version'),
 
                      # If this is set to true, we will read the username and password and attempt to authenticate. If not, we will attempt to connect unauthenticated
                      'authenticate': LaunchConfiguration('authenticate'),

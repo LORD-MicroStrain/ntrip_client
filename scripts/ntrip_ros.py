@@ -21,6 +21,7 @@ class NTRIPRos(Node):
         ('host', '127.0.0.1'),
         ('port', 2101),
         ('mountpoint', 'mount'),
+        ('ntrip_version', ''),
         ('authenticate', False),
         ('username', ''),
         ('password', ''),
@@ -32,6 +33,11 @@ class NTRIPRos(Node):
     host = self.get_parameter('host').value
     port = self.get_parameter('port').value
     mountpoint = self.get_parameter('mountpoint').value
+
+    # Optionally get the ntrip version from the launch file
+    ntrip_version = self.get_parameter('ntrip_version').value
+    if ntrip_version == '':
+      ntrip_version = None
 
     # If we were asked to authenticate, read the username and password
     username = None
@@ -59,6 +65,7 @@ class NTRIPRos(Node):
       host=host,
       port=port,
       mountpoint=mountpoint,
+      ntrip_version=ntrip_version,
       username=username,
       password=password,
       logerr=self.get_logger().error,
