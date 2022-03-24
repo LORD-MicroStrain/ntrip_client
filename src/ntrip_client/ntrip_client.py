@@ -10,12 +10,15 @@ from .rtcm_parser import RTCMParser
 
 _CHUNK_SIZE = 1024
 _SOURCETABLE_RESPONSE = 'SOURCETABLE 200 OK'
-_SUCCESS_RESPONSE = 'ICY 200 OK'
+_SUCCESS_RESPONSES = [
+  'ICY 200 OK',
+  'HTTP/1.0 200 OK'
+]
 
 
 class NTRIPClient:
 
-  def __init__(self, host, port, mountpoint, username, password, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
+  def __init__(self, host, port, mountpoint, ntrip_version, username, password, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
     # Bit of a strange pattern here, but save the log functions so we can be agnostic of ROS
     self._logerr = logerr
     self._logwarn = logwarn
@@ -26,6 +29,7 @@ class NTRIPClient:
     self._host = host
     self._port = port
     self._mountpoint = mountpoint
+    self._ntrip_version = ntrip_version
     if username is not None and password is not None:
       self._basic_credentials = base64.b64encode('{}:{}'.format(
         username, password).encode('utf-8')).decode('utf-8')
@@ -82,7 +86,7 @@ class NTRIPClient:
       return False
 
     # Properly handle the response
-    if _SUCCESS_RESPONSE in response:
+    if any(success in response for success in _SUCCESS_RESPONSES):
       self._loginfo(
         'Connected to http://{}:{}/{}'.format(self._host, self._port, self._mountpoint))
       self._server_socket.setblocking(False)
@@ -152,8 +156,12 @@ class NTRIPClient:
     return self._rtcm_parser.parse(data) if data else []
 
   def _form_request(self):
-    request_str = 'GET /{} HTTP/1.0\r\nNtrip-Version\r\nUser-Agent: NTRIP ntrip_client_ros\r\n'.format(
-      self._mountpoint)
+    if self._ntrip_version != None and self._ntrip_version != '':
+      request_str = 'GET /{} HTTP/1.0\r\nNtrip-Version: {}\r\nUser-Agent: NTRIP ntrip_client_ros\r\n'.format(
+        self._mountpoint, self._ntrip_version)
+    else:
+      request_str = 'GET /{} HTTP/1.0\r\nUser-Agent: NTRIP ntrip_client_ros\r\n'.format(
+        self._mountpoint)
     if self._basic_credentials is not None:
       request_str += 'Authorization: Basic {}\r\n'.format(
         self._basic_credentials)
