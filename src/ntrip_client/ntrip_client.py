@@ -9,10 +9,15 @@ from .nmea_parser import NMEAParser
 from .rtcm_parser import RTCMParser
 
 _CHUNK_SIZE = 1024
-_SOURCETABLE_RESPONSE = 'SOURCETABLE 200 OK'
+_SOURCETABLE_RESPONSES = [
+  'SOURCETABLE 200 OK'
+]
 _SUCCESS_RESPONSES = [
   'ICY 200 OK',
   'HTTP/1.0 200 OK'
+]
+_UNAUTHORIZED_RESPONSES = [
+  '401'
 ]
 
 
@@ -92,12 +97,15 @@ class NTRIPClient:
       self._server_socket.setblocking(False)
       self._connected = True
       return True
-    elif _SOURCETABLE_RESPONSE in response:
-      self._logerr('Received sourcetable from http://{}:{}/{}, this probably means that the mountpoint used is invalid'.format(
-        self._host, self._port, self._mountpoint))
-      self._logerr('Sourcetable Response: \n{}'.format(response))
-      return False
     else:
+      # Some debugging hints about the kind of error we received
+      if any(sourcetable in response for sourcetable in _SOURCETABLE_RESPONSES):
+        self._logwarn('Received sourcetable response from the server. This probably means the mountpoint specified is not valid')
+      elif any(unauthorized in response for unauthorized in _UNAUTHORIZED_RESPONSES):
+        self._logwarn('Received unauthorized response from the server. Check your username, password, and mountpoint to make sure they are correct.')
+      elif self._ntrip_version == None or self._ntrip_version == '':
+        self._logwarn('Received unknotn error from the server. Note that the NTRIP version was not specified in the launch file. This is not necesarilly the cause of this error, but it may be worth checking your NTRIP casters documentation to see if the NTRIP version needs to be specified.')
+
       self._logerr('Invalid response received from http://{}:{}/{}'.format(
         self._host, self._port, self._mountpoint))
       self._logerr('Response: {}'.format(response))
