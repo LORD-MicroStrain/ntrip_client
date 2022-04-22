@@ -92,24 +92,33 @@ class NTRIPClient:
 
     # Properly handle the response
     if any(success in response for success in _SUCCESS_RESPONSES):
-      self._loginfo(
-        'Connected to http://{}:{}/{}'.format(self._host, self._port, self._mountpoint))
       self._server_socket.setblocking(False)
       self._connected = True
-      return True
-    else:
-      # Some debugging hints about the kind of error we received
-      if any(sourcetable in response for sourcetable in _SOURCETABLE_RESPONSES):
-        self._logwarn('Received sourcetable response from the server. This probably means the mountpoint specified is not valid')
-      elif any(unauthorized in response for unauthorized in _UNAUTHORIZED_RESPONSES):
-        self._logwarn('Received unauthorized response from the server. Check your username, password, and mountpoint to make sure they are correct.')
-      elif self._ntrip_version == None or self._ntrip_version == '':
-        self._logwarn('Received unknotn error from the server. Note that the NTRIP version was not specified in the launch file. This is not necesarilly the cause of this error, but it may be worth checking your NTRIP casters documentation to see if the NTRIP version needs to be specified.')
 
+    # Some debugging hints about the kind of error we received
+    known_error = False
+    if any(sourcetable in response for sourcetable in _SOURCETABLE_RESPONSES):
+      self._logwarn('Received sourcetable response from the server. This probably means the mountpoint specified is not valid')
+      known_error = True
+    elif any(unauthorized in response for unauthorized in _UNAUTHORIZED_RESPONSES):
+      self._logwarn('Received unauthorized response from the server. Check your username, password, and mountpoint to make sure they are correct.')
+      known_error = True
+    elif not self._connected and (self._ntrip_version == None or self._ntrip_version == ''):
+      self._logwarn('Received unknown error from the server. Note that the NTRIP version was not specified in the launch file. This is not necesarilly the cause of this error, but it may be worth checking your NTRIP casters documentation to see if the NTRIP version needs to be specified.')
+      known_error = True
+
+    # Wish we could just return from the above checks, but some casters return both a success and an error in the response
+    # If we received any known error, even if we received a success it should be considered a failure
+    if known_error or not self._connected:
       self._logerr('Invalid response received from http://{}:{}/{}'.format(
         self._host, self._port, self._mountpoint))
       self._logerr('Response: {}'.format(response))
       return False
+    else:
+      self._loginfo(
+        'Connected to http://{}:{}/{}'.format(self._host, self._port, self._mountpoint))
+      return True
+
 
   def disconnect(self):
     # Disconnect the socket
