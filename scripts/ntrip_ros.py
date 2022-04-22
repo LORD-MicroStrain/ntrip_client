@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+import os
 import sys
+import json
 
 import rclpy
 from rclpy.node import Node
@@ -13,6 +15,12 @@ from ntrip_client.ntrip_client import NTRIPClient
 
 class NTRIPRos(Node):
   def __init__(self):
+    # Read a debug flag from the environment that should have been set by the launch file
+    try:
+      self._debug = json.loads(os.environ["NTRIP_CLIENT_DEBUG"].lower())
+    except:
+      self._debug = False
+
     # Init the node and declare params
     super().__init__('ntrip_client')
     self.declare_parameters(
@@ -38,6 +46,10 @@ class NTRIPRos(Node):
     ntrip_version = self.get_parameter('ntrip_version').value
     if ntrip_version == '':
       ntrip_version = None
+
+    # Set the log level to debug if debug is true
+    if self._debug:
+      rclpy.logging.set_logger_level(self.get_logger().name, rclpy.logging.LoggingSeverity.DEBUG)
 
     # If we were asked to authenticate, read the username and password
     username = None
