@@ -10,6 +10,11 @@
   <arg name="authenticate"           default = "true" />
   <arg name="username"               default = "user" />
   <arg name="password"               default = "pass" />
+  <arg name="ntrip_version"          default = "" />
+  <arg name="debug"                  default = "false" />
+
+  <!-- Set the log level to debug -->
+  <env name="NTRIP_CLIENT_DEBUG" value="$(arg debug)" />
 
   <!-- ****************************************************************** -->
   <!-- NTRIP Client Node -->
@@ -20,6 +25,9 @@
     <param name="host"       value="$(arg host)" />
     <param name="port"       value="$(arg port)" />
     <param name="mountpoint" value="$(arg mountpoint)" />
+
+    <!-- Optional parameter that will set the NTRIP version in the initial HTTP request to the NTRIP caster. -->
+    <param name="ntrip_version" value="$(arg ntrip_version)" />
 
     <!-- If this is set to true, we will read the username and password and attempt to authenticate. If not, we will attempt to connect unauthenticated -->
     <param name="authenticate" value="$(arg authenticate)" />

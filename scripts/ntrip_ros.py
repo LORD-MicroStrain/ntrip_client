@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
+import os
 import sys
+import json
 
 import rospy
 from std_msgs.msg import Header
@@ -12,11 +14,25 @@ from ntrip_client.ntrip_client import NTRIPClient
 
 class NTRIPRos:
   def __init__(self):
+    # Read a debug flag from the environment that should have been set by the launch file
+    try:
+      self._debug = json.loads(os.environ["NTRIP_CLIENT_DEBUG"].lower())
+    except:
+      self._debug = False
+
     # Init the node and read some mandatory config
-    rospy.init_node('ntrip_client', anonymous=True)
+    if self._debug:
+      rospy.init_node('ntrip_client', anonymous=True, log_level=rospy.DEBUG)
+    else:
+      rospy.init_node('ntrip_client', anonymous=True)
     host = rospy.get_param('~host', '127.0.0.1')
     port = rospy.get_param('~port', '2101')
     mountpoint = rospy.get_param('~mountpoint', 'mount')
+
+    # Optionally get the ntrip version from the launch file
+    ntrip_version = rospy.get_param('~ntrip_version', None)
+    if ntrip_version == '':
+      ntrip_version = None
 
     # If we were asked to authenticate, read the username and password
     username = None
@@ -45,6 +61,7 @@ class NTRIPRos:
       host=host,
       port=port,
       mountpoint=mountpoint,
+      ntrip_version=ntrip_version,
       username=username,
       password=password,
       logerr=rospy.logerr,
