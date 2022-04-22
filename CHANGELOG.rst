@@ -2,7 +2,7 @@
 Changelog for package ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
+1.1.0 (2022-04-22)
 ------------------
 * ROS Ntrip Version Configuration (`#8 <https://github.com/LORD-MicroStrain/ntrip_client/issues/8>`_)
   * No longer sends Ntrip-Version header if not specified
