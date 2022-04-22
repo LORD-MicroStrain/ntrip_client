@@ -11,6 +11,10 @@
   <arg name="username"               default = "user" />
   <arg name="password"               default = "pass" />
   <arg name="ntrip_version"          default = "" />
+  <arg name="debug"                  default = "false" />
+
+  <!-- Set the log level to debug -->
+  <env name="NTRIP_CLIENT_DEBUG" value="$(arg debug)" />
 
   <!-- ****************************************************************** -->
   <!-- NTRIP Client Node -->
