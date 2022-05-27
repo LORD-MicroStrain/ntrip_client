@@ -1,7 +1,7 @@
 import logging
 
 _NMEA_MAX_LENGTH = 82
-_NMEA_MIN_LENGTH = 3
+_NMEA_MIN_LENGTH = 50
 _NMEA_CHECKSUM_SEPERATOR = "*"
 
 class NMEAParser:
@@ -15,11 +15,11 @@ class NMEAParser:
 
   def is_valid_sentence(self, sentence):
     # Simple sanity checks
-    if len(sentence) > _NMEA_MAX_LENGTH:
+    if len(sentence.rstrip()) > _NMEA_MAX_LENGTH:
       self._logwarn('Received invalid NMEA sentence. Max length is {}, but sentence was {} bytes'.format(_NMEA_MAX_LENGTH, len(sentence)))
       self._logwarn('Sentence: {}'.format(sentence))
       return False
-    if len(sentence) < _NMEA_MIN_LENGTH:
+    if len(sentence.rstrip()) < _NMEA_MIN_LENGTH:
       self._logwarn('Received invalid NMEA sentence. We need at least {} bytes to parse but got {} bytes'.format(_NMEA_MIN_LENGTH, len(sentence)))
       self._logwarn('Sentence: {}'.format(sentence))
       return False
