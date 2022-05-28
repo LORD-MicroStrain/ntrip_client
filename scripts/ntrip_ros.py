@@ -6,11 +6,28 @@ import json
 
 import rospy
 from std_msgs.msg import Header
-from mavros_msgs.msg import RTCM
+
 from nmea_msgs.msg import Sentence
 
 from ntrip_client.ntrip_client import NTRIPClient
 
+# Try to import rtcm msg from mavros_msgs
+have_mavros_msgs = False
+try:
+  from mavros_msgs.msg import RTCM
+  have_mavros_msgs = True
+  print('mavros_msgs')
+except:
+  print('Unable to import from mavros_msgs')
+
+# try to import rtcm msg from rtcm_msgs
+have_rtcm_msgs = False
+try:
+  from rtcm_msgs.msg import Message
+  have_rtcm_msgs = True
+  print('rtcm_msgs')
+except:
+  print('Unable to import from rtcm_msgs')
 
 class NTRIPRos:
   def __init__(self):
@@ -28,6 +45,7 @@ class NTRIPRos:
     host = rospy.get_param('~host', '127.0.0.1')
     port = rospy.get_param('~port', '2101')
     mountpoint = rospy.get_param('~mountpoint', 'mount')
+    self.rtcm_msg_pkg = rospy.get_param('~rtcm_msg_pkg', 'mavros_msgs')
 
     # Optionally get the ntrip version from the launch file
     ntrip_version = rospy.get_param('~ntrip_version', None)
@@ -54,7 +72,13 @@ class NTRIPRos:
 
     # Setup the RTCM publisher
     self._rtcm_timer = None
-    self._rtcm_pub = rospy.Publisher('rtcm', RTCM, queue_size=10)
+    if self.rtcm_msg_pkg == 'mavros_msgs' and have_mavros_msgs == True:
+      self._rtcm_pub = rospy.Publisher('rtcm', RTCM, queue_size=10)
+    elif self.rtcm_msg_pkg == 'rtcm_msgs' and have_rtcm_msgs == True:
+      self._rtcm_pub = rospy.Publisher('rtcm', Message, queue_size=10)
+    else:
+      rospy.logfatal('The rtcm message package {} could not be imported - check it is installed'.format(self.rtcm_msg_pkg))
+      raise Exception('The rtcm message package {} could not be imported - check it is installed'.format(self.rtcm_msg_pkg))
 
     # Initialize the client
     self._client = NTRIPClient(
@@ -102,15 +126,27 @@ class NTRIPRos:
     self._client.send_nmea(nmea.sentence)
 
   def publish_rtcm(self, event):
-    for raw_rtcm in self._client.recv_rtcm():
-      self._rtcm_pub.publish(RTCM(
-        header=Header(
-          stamp=rospy.Time.now(),
-          frame_id=self._rtcm_frame_id
-        ),
-        data=raw_rtcm
-      ))
-
+    try:
+      for raw_rtcm in self._client.recv_rtcm():
+        if self.rtcm_msg_pkg == 'mavros_msgs':
+          rtcm_msg = RTCM(
+            header=Header(
+              stamp=rospy.Time.now(),
+              frame_id=self._rtcm_frame_id
+            ),
+            data=raw_rtcm
+          )
+        elif self.rtcm_msg_pkg == 'rtcm_msgs':
+          rtcm_msg = Message(
+            header=Header(
+              stamp=rospy.Time.now(),
+              frame_id=self._rtcm_frame_id
+            ),
+            message =raw_rtcm
+          )
+        self._rtcm_pub.publish(rtcm_msg)
+    except:
+      pass
 
 if __name__ == '__main__':
   ntrip_ros = NTRIPRos()
