@@ -12,6 +12,7 @@
   <depend>rospy</depend>
   <depend>std_msgs</depend>
   <depend>mavros_msgs</depend>
+  <depend>rtcm_msgs</depend>
   <depend>nmea_msgs</depend>
   <buildtool_depend>catkin</buildtool_depend>
 
