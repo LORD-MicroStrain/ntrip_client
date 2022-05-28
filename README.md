@@ -1,5 +1,11 @@
 # ROS NTRIP Client
 
+Cloned from https://github.com/LORD-MicroStrain/ntrip_client with the addition of https://github.com/PaulBouchier/ntrip_client/tree/rtcm_msgs_support for rtcm_msgs/Message support. I am using it with https://github.com/KumarRobotics/ublox and a ZED-F9P on a raspberry pi 4 running ROS noetic.
+
+The most significative changes I made are in the src/ntrip_client/ntrip_client.py file.
+It now handles disconnection from the net, lack of signal from the sat (and hence missing valid GGA string to the NTRIP server which will then stop sending corrections) regaining connectivity once the conditions for the net or the gps are more favorable.
+
+
 ## Description
 
 ROS node that will communicate with an NTRIP server to receive RTCM connections and publish them on a ROS topic. Also works with network/VRS mountpoints by subscribing to NMEA
