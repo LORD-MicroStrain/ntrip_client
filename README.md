@@ -1,7 +1,5 @@
 # ROS NTRIP Client
 
-Also compatible with https://github.com/KumarRobotics/ublox and  ZED-F9P 
-
 The most significative changes I made are in the src/ntrip_client/ntrip_client.py file.
 It now handles disconnection from the net, lack of signal from the sat (and hence missing valid GGA string to the NTRIP server which will then stop sending corrections) regaining connectivity once the conditions for the net or the gps are more favorable.
 
@@ -16,6 +14,8 @@ There are two important branches that you may want to checkout:
 
 * [ros](https://github.com/LORD-MicroStrain/ntrip_client/tree/ros) -- Contains ROS1 implementation for this node.
 * [ros2](https://github.com/LORD-MicroStrain/ntrip_client/tree/ros2) -- Contains ROS2 implementation for this node.
+
+Also compatible with https://github.com/KumarRobotics/ublox and  ZED-F9P 
 
 ## Build Instructions
 
