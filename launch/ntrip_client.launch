@@ -12,7 +12,7 @@
   <arg name="password"               default = "pass" />
   <arg name="ntrip_version"          default = "" />
   <arg name="debug"                  default = "false" />
-  <arg name="rtcm_msg_pkg"           default = "rtcm_msgs" />
+  <arg name="rtcm_msg_pkg"           default = "mavros_msgs" />
 
   <!-- Set the log level to debug -->
   <env name="NTRIP_CLIENT_DEBUG" value="$(arg debug)" />
