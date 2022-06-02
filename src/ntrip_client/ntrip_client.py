@@ -27,7 +27,7 @@ class NTRIPClient:
   _basic_credentials = None
   _connected = False
   _valid_nmea = False
-  _lastNEMEA = None
+  _last_nmea = None
   _justConnected = False
   _timeSinceConnection = 0
   
@@ -133,9 +133,9 @@ class NTRIPClient:
       self._timeSinceConnection = time()
       sleep(2)  
       # Send last good Nemea if available  
-      if self._lastNEMEA is not None:
+      if self._last_nmea is not None:
         try:
-          self._server_socket.send(self._lastNEMEA.encode('utf-8'))
+          self._server_socket.send(self._last_nmea.encode('utf-8'))
         except:
           pass
       return True
@@ -181,7 +181,7 @@ class NTRIPClient:
     try:
       self._server_socket.send(sentence.encode('utf-8'))
       # Save last good data to send at reconnection
-      self._lastNEMEA = sentence
+      self._last_nmea = sentence
     except Exception as e:
       self._logwarn('Unable to send NMEA sentence to server.')
       self._logwarn('Exception: {}'.format(str(e)))
@@ -190,7 +190,7 @@ class NTRIPClient:
   def recv_rtcm(self):
     # Since we only ever pass the server socket to the list of read sockets, we can just read from that
     # Read all available data into a buffer
-    lastread = 0
+    last_read = 0
     data = b''
     disconn = False
     while True:
@@ -210,12 +210,12 @@ class NTRIPClient:
             pass
           now = time()
           if len(ready_to_read) > 0:
-            lastread = now
+            last_read = now
             chunk = self._server_socket.recv(_CHUNK_SIZE)
             data += chunk
             if len(chunk) < _CHUNK_SIZE:
               break
-          if not ready_to_read and now - lastread > 10:
+          if not ready_to_read and now - last_read > 10:
             disconn = True
         except select.error:
           disconn = True
