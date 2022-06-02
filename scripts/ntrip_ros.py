@@ -146,7 +146,7 @@ class NTRIPRos:
           )
         self._rtcm_pub.publish(rtcm_msg)
     except:
-      pass
+      rospy.logerr('RTCM publish to topic failed')
 
 if __name__ == '__main__':
   ntrip_ros = NTRIPRos()
