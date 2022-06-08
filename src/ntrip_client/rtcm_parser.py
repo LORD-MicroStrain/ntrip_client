@@ -64,19 +64,22 @@ class RTCMParser:
     rtcm_packets = []
     while index < len(combined_buffer):
       # Find the start of the RTCM 3.2 packet
-      if combined_buffer[index] == _RTCM_3_2_PREAMBLE:
+      ascii_values = []
+      for ch in combined_buffer:
+        ascii_values.append(ord(ch))
+      if ascii_values[index] == _RTCM_3_2_PREAMBLE:
         # Make sure we have enough data to find the length
-        if len(combined_buffer) <= index + 2:
+        if len(ascii_values) <= index + 2:
           self._logdebug('Found beginning of RTCM packet at {}, but there is not enough data in the buffer to find the message length'.format(index))
           self._caching_data = True
           buffer = buffer[index:]
           break
 
         # Make sure we have enough data in the packet to validate it
-        message_length = (combined_buffer[index + 1] << 8 | combined_buffer[index + 2]) & 0x03FF
-        if index + message_length + 6 <= len(combined_buffer):
+        message_length = (ascii_values[index + 1] << 8 | ascii_values[index + 2]) & 0x03FF
+        if index + message_length + 6 <= len(ascii_values):
           # Grab the packet from the buffer, and verify that it is valid by comparing checksums
-          packet = combined_buffer[index:index + message_length + 6]
+          packet = ascii_values[index:index + message_length + 6]
           expected_checksum = packet[-3] << 16 | packet[-2] << 8 | packet[-1]
           actual_checksum = self._checksum(packet[:-3])
           if expected_checksum == actual_checksum:
