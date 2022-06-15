@@ -1,7 +1,7 @@
 # ROS NTRIP Client
 
-The most significative changes I made are in the src/ntrip_client/ntrip_client.py file.
 It now handles disconnection from the net, lack of signal from the sat (and hence missing valid GGA string to the NTRIP server which will then stop sending corrections) regaining connectivity once the conditions for the net or the gps are more favorable.
+Also compatible with non standard lenght nmea sentences.
 
 
 ## Description
