@@ -28,8 +28,8 @@ class NTRIPClient:
   _connected = False
   _valid_nmea = False
   _last_nmea = None
-  _justConnected = False
-  _timeSinceConnection = 0
+  _just_connected = False
+  _time_since_connection = 0
   
   def __init__(self, host, port, mountpoint, ntrip_version, username, password, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
     # Bit of a strange pattern here, but save the log functions so we can be agnostic of ROS
@@ -129,8 +129,8 @@ class NTRIPClient:
     else:
       self._loginfo(
         'Connected to http://{}:{}/{}'.format(self._host, self._port, self._mountpoint))
-      self._justConnected = True
-      self._timeSinceConnection = time()
+      self._just_connected = True
+      self._time_since_connection = time()
       sleep(2)  
       # Send last good Nemea if available  
       if self._last_nmea is not None:
@@ -141,7 +141,7 @@ class NTRIPClient:
       return True
     
   def disconnect(self):
-    if self._connected and not self._justConnected:
+    if self._connected and not self._just_connected:
       try:
         self._logwarn('Disconnection from NTRIP Server')
         # Disconnect the socket
@@ -194,8 +194,8 @@ class NTRIPClient:
     data = b''
     disconn = False
     while True:
-      if time() - self._timeSinceConnection > 5:
-        self._justConnected = False
+      if time() - self._time_since_connection > 5:
+        self._just_connected = False
       if not self._connected:  
         if self._valid_nmea:
           try:
@@ -225,7 +225,7 @@ class NTRIPClient:
       disconn = False
       self.disconnect()
 
-    if len(data) == 0 and not self._justConnected:
+    if len(data) == 0 and not self._just_connected:
       try:
         self._logdebug('Data lenght 0. No data received. Trying reconnection when next NMEA arrives.')
         if self._valid_nmea:
