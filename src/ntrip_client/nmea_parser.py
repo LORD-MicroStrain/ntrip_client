@@ -1,6 +1,5 @@
 import logging
 
-#_NMEA_MAX_LENGTH = nmea_max_length   # Standard NMEA is 82 characters, set higher for High Precision Mode of some vendors
 _NMEA_MIN_LENGTH = 50
 _NMEA_CHECKSUM_SEPERATOR = "*"
 
