@@ -80,6 +80,9 @@ class NTRIPRos:
       rospy.logfatal('The rtcm message package {} could not be imported - check it is installed'.format(self.rtcm_msg_pkg))
       raise Exception('The rtcm message package {} could not be imported - check it is installed'.format(self.rtcm_msg_pkg))
 
+    # Set the standard nmea max lenght unless otherwise specified in the config
+    nmea_max_length = rospy.get_param('~nmea_max_length', 82)
+
     # Initialize the client
     self._client = NTRIPClient(
       host=host,
@@ -88,6 +91,7 @@ class NTRIPRos:
       ntrip_version=ntrip_version,
       username=username,
       password=password,
+      nmea_max_length=nmea_max_length,
       logerr=rospy.logerr,
       logwarn=rospy.logwarn,
       loginfo=rospy.loginfo,

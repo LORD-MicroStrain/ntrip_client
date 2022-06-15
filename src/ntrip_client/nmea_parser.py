@@ -1,22 +1,24 @@
 import logging
 
-_NMEA_MAX_LENGTH = 85   # Standard NMEA is 82 characters, set higher for High Precision Mode of some vendors
+#_NMEA_MAX_LENGTH = nmea_max_length   # Standard NMEA is 82 characters, set higher for High Precision Mode of some vendors
 _NMEA_MIN_LENGTH = 50
 _NMEA_CHECKSUM_SEPERATOR = "*"
 
 class NMEAParser:
 
-  def __init__(self, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
+  def __init__(self, nmea_max_length, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
     # Bit of a strange pattern here, but save the log functions so we can be agnostic of ROS
     self._logerr = logerr
     self._logwarn = logwarn
     self._loginfo = loginfo
     self._logdebug = logdebug
+    self._nmea_max_length = nmea_max_length
 
   def is_valid_sentence(self, sentence):
     # Simple sanity checks
-    if len(sentence) > _NMEA_MAX_LENGTH:
-      self._logwarn('Received invalid NMEA sentence. Max length is {}, but sentence was {} bytes'.format(_NMEA_MAX_LENGTH, len(sentence)))
+    if len(sentence) > self._nmea_max_length:
+      self._logwarn('Received invalid NMEA sentence. Max length is {}, but sentence was {} bytes'.format(self._nmea_max_length, len(sentence)))
+      self._logwarn('If your GPS outputs non standard lenght nmea strings, see parameter nmea_max_length in launch file')
       self._logwarn('Sentence: {}'.format(sentence))
       return False
     if len(sentence) < _NMEA_MIN_LENGTH:

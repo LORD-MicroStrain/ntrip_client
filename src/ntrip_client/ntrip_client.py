@@ -31,7 +31,7 @@ class NTRIPClient:
   _just_connected = False
   _time_since_connection = 0
   
-  def __init__(self, host, port, mountpoint, ntrip_version, username, password, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
+  def __init__(self, host, port, mountpoint, ntrip_version, username, password, nmea_max_length, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
     # Bit of a strange pattern here, but save the log functions so we can be agnostic of ROS
     self._logerr = logerr
     self._logwarn = logwarn
@@ -49,8 +49,6 @@ class NTRIPClient:
     else:
       self._basic_credentials = None
 
-    
-
     # Setup some parsers to parse incoming messages
     self._rtcm_parser = RTCMParser(
       logerr=logerr,
@@ -59,6 +57,7 @@ class NTRIPClient:
       logdebug=logdebug
     )
     self._nmea_parser = NMEAParser(
+      nmea_max_length=nmea_max_length,
       logerr=logerr,
       logwarn=logwarn,
       loginfo=loginfo,
