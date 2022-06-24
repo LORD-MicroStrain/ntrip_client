@@ -11,7 +11,7 @@ def generate_launch_description():
           DeclareLaunchArgument('host',          default_value='20.185.11.35'),
           DeclareLaunchArgument('port',          default_value='2101'),
           DeclareLaunchArgument('mountpoint',    default_value='VTRI_RTCM3'),
-          DeclareLaunchArgument('ntrip_version', default_value=''),
+          DeclareLaunchArgument('ntrip_version', default_value='None'),
           DeclareLaunchArgument('authenticate',  default_value='True'),
           DeclareLaunchArgument('username',      default_value='user'),
           DeclareLaunchArgument('password',      default_value='pass'),
