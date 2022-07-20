@@ -52,6 +52,11 @@ class NTRIPRos:
     # Read an optional Frame ID from the config
     self._rtcm_frame_id = rospy.get_param('~rtcm_frame_id', 'odom')
 
+    # Get some timeout parameters for the NTRIP client
+    reconnect_attempt_max = rospy.get_param('~reconnect_attempt_max', 10)
+    reconnect_attempt_wait_seconds = rospy.get_param('~reconnect_attempt_wait_seconds', 5)
+    rtcm_timeout_seconds = rospy.get_param('~rtcm_timeout_seconds', 4)
+
     # Setup the RTCM publisher
     self._rtcm_timer = None
     self._rtcm_pub = rospy.Publisher('rtcm', RTCM, queue_size=10)
@@ -64,6 +69,9 @@ class NTRIPRos:
       ntrip_version=ntrip_version,
       username=username,
       password=password,
+      reconnect_attempt_max=reconnect_attempt_max,
+      reconnect_attempt_wait_seconds=reconnect_attempt_wait_seconds,
+      rtcm_timeout_seconds=rtcm_timeout_seconds,
       logerr=rospy.logerr,
       logwarn=rospy.logwarn,
       loginfo=rospy.loginfo,
@@ -95,7 +103,7 @@ class NTRIPRos:
       self._rtcm_timer.shutdown()
       self._rtcm_timer.join()
     rospy.loginfo('Disconnecting NTRIP client')
-    self._client.disconnect()
+    self._client.shutdown()
 
   def subscribe_nmea(self, nmea):
     # Just extract the NMEA from the message, and send it right to the server
