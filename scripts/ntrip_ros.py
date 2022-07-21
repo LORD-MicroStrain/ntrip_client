@@ -125,8 +125,6 @@ class NTRIPRos(Node):
 
   def publish_rtcm(self):
     for raw_rtcm in self._client.recv_rtcm():
-      pass
-      '''
       self._rtcm_pub.publish(RTCM(
         header=Header(
           stamp=self.get_clock().now().to_msg(),
@@ -134,7 +132,6 @@ class NTRIPRos(Node):
         ),
         data=raw_rtcm
       ))
-      '''
 
 
 if __name__ == '__main__':
