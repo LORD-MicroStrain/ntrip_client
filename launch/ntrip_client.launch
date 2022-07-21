@@ -39,6 +39,10 @@
     <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages publishe by this node -->
     <param name="rtcm_frame_id" value="odom" />
 
+    <!-- Optional parameters that will allow for longer or shorter NMEA messages. Standard max length for NMEA is 82 -->
+    <param name="nmea_max_length" value="82" />
+    <param name="nmea_min_length" value="3" />
+
     <!-- Uncomment the following section and replace "/gx5/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested -->
     <!--<remap from="/ntrip_client/nmea" to="/gx5/nmea/sentence" />-->
   </node>
