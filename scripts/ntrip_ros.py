@@ -29,7 +29,7 @@ class NTRIPRos(Node):
         ('host', '127.0.0.1'),
         ('port', 2101),
         ('mountpoint', 'mount'),
-        ('ntrip_version', ''),
+        ('ntrip_version', 'None'),
         ('authenticate', False),
         ('username', ''),
         ('password', ''),
@@ -47,7 +47,7 @@ class NTRIPRos(Node):
 
     # Optionally get the ntrip version from the launch file
     ntrip_version = self.get_parameter('ntrip_version').value
-    if ntrip_version == '':
+    if ntrip_version == 'None':
       ntrip_version = None
 
     # Set the log level to debug if debug is true
