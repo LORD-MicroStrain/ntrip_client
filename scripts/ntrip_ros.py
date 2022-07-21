@@ -10,6 +10,7 @@ from mavros_msgs.msg import RTCM
 from nmea_msgs.msg import Sentence
 
 from ntrip_client.ntrip_client import NTRIPClient
+from ntrip_client.nmea_parser import NMEA_DEFAULT_MAX_LENGTH, NMEA_DEFAULT_MIN_LENGTH
 
 
 class NTRIPRos:
@@ -52,6 +53,10 @@ class NTRIPRos:
     # Read an optional Frame ID from the config
     self._rtcm_frame_id = rospy.get_param('~rtcm_frame_id', 'odom')
 
+    # Read some options for parsing NMEA from the launch file
+    nmea_max_length = rospy.get_param('~nmea_max_length', NMEA_DEFAULT_MAX_LENGTH)
+    nmea_min_length = rospy.get_param('~nmea_min_length', NMEA_DEFAULT_MIN_LENGTH)
+
     # Setup the RTCM publisher
     self._rtcm_timer = None
     self._rtcm_pub = rospy.Publisher('rtcm', RTCM, queue_size=10)
@@ -69,6 +74,10 @@ class NTRIPRos:
       loginfo=rospy.loginfo,
       logdebug=rospy.logdebug
     )
+
+    # Set parameters on the client
+    self._client.nmea_parser.nmea_max_length = nmea_max_length
+    self._client.nmea_parser.nmea_min_length = nmea_min_length
 
   def run(self):
     # Setup a shutdown hook
