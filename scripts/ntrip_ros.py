@@ -3,15 +3,26 @@
 import os
 import sys
 import json
+import importlib.util
 
 import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Header
-from mavros_msgs.msg import RTCM
 from nmea_msgs.msg import Sentence
 
 from ntrip_client.ntrip_client import NTRIPClient
 
+# Try to import a couple different types of RTCM messages
+_MAVROS_MSGS_NAME = "mavros_msgs"
+_RTCM_MSGS_NAME = "rtcm_msgs"
+have_mavros_msgs = False
+have_rtcm_msgs = False
+if importlib.util.find_spec(_MAVROS_MSGS_NAME) is not None:
+  have_mavros_msgs = True
+  from mavros_msgs.msg import RTCM as mavros_msgs_RTCM
+if importlib.util.find_spec(_RTCM_MSGS_NAME) is not None:
+  have_rtcm_msgs = True
+  from rtcm_msgs.msg import Message as rtcm_msgs_RTCM
 
 class NTRIPRos(Node):
   def __init__(self):
@@ -33,7 +44,8 @@ class NTRIPRos(Node):
         ('authenticate', False),
         ('username', ''),
         ('password', ''),
-        ('rtcm_frame_id', 'odom')
+        ('rtcm_frame_id', 'odom'),
+        ('rtcm_message_package', _MAVROS_MSGS_NAME)
       ]
     )
 
@@ -69,8 +81,26 @@ class NTRIPRos(Node):
     # Read an optional Frame ID from the config
     self._rtcm_frame_id = self.get_parameter('rtcm_frame_id').value
 
+    # Determine the type of RTCM message that will be published
+    rtcm_message_package = self.get_parameter('rtcm_message_package').value
+    if rtcm_message_package == _MAVROS_MSGS_NAME:
+      if have_mavros_msgs:
+        self._rtcm_message_type = mavros_msgs_RTCM
+        self._create_rtcm_message = self._create_mavros_msgs_rtcm_message
+      else:
+        self.get_logger().fatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_message_package))
+    elif rtcm_message_package == _RTCM_MSGS_NAME:
+      if have_rtcm_msgs:
+        self._rtcm_message_type = rtcm_msgs_RTCM
+        self._create_rtcm_message = self._create_rtcm_msgs_rtcm_message
+      else:
+        self.get_logger().fatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_message_package))
+    else:
+      self.get_logger().fatal('The RTCM package {} is not a valid option. Please choose between the following packages {}'.format(rtcm_message_package, ','.join([_MAVROS_MSGS_NAME, _RTCM_MSGS_NAME])))
+
+
     # Setup the RTCM publisher
-    self._rtcm_pub = self.create_publisher(RTCM, 'rtcm', 10)
+    self._rtcm_pub = self.create_publisher(self._rtcm_message_type, 'rtcm', 10)
 
     # Initialize the client
     self._client = NTRIPClient(
@@ -114,14 +144,25 @@ class NTRIPRos(Node):
 
   def publish_rtcm(self):
     for raw_rtcm in self._client.recv_rtcm():
-      self._rtcm_pub.publish(RTCM(
-        header=Header(
-          stamp=self.get_clock().now().to_msg(),
-          frame_id=self._rtcm_frame_id
-        ),
-        data=raw_rtcm
-      ))
+      self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
 
+  def _create_mavros_msgs_rtcm_message(self, rtcm):
+    return mavros_msgs_RTCM(
+      header=Header(
+        stamp=self.get_clock().now().to_msg(),
+        frame_id=self._rtcm_frame_id
+      ),
+      data=rtcm
+    )
+
+  def _create_rtcm_msgs_rtcm_message(self, rtcm):
+    return rtcm_msgs_RTCM(
+      header=Header(
+        stamp=self.get_clock().now().to_msg(),
+        frame_id=self._rtcm_frame_id
+      ),
+      message=rtcm
+    )
 
 if __name__ == '__main__':
   # Start the node
