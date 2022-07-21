@@ -8,14 +8,15 @@ from launch.actions import SetEnvironmentVariable
 def generate_launch_description():
       return LaunchDescription([
           # Declare arguments with default values
-          DeclareLaunchArgument('host',          default_value='20.185.11.35'),
-          DeclareLaunchArgument('port',          default_value='2101'),
-          DeclareLaunchArgument('mountpoint',    default_value='VTRI_RTCM3'),
-          DeclareLaunchArgument('ntrip_version', default_value='None'),
-          DeclareLaunchArgument('authenticate',  default_value='True'),
-          DeclareLaunchArgument('username',      default_value='user'),
-          DeclareLaunchArgument('password',      default_value='pass'),
-          DeclareLaunchArgument('debug',         default_value='false'),
+          DeclareLaunchArgument('host',                  default_value='20.185.11.35'),
+          DeclareLaunchArgument('port',                  default_value='2101'),
+          DeclareLaunchArgument('mountpoint',            default_value='VTRI_RTCM3'),
+          DeclareLaunchArgument('ntrip_version',         default_value='None'),
+          DeclareLaunchArgument('authenticate',          default_value='True'),
+          DeclareLaunchArgument('username',              default_value='user'),
+          DeclareLaunchArgument('password',              default_value='pass'),
+          DeclareLaunchArgument('debug',                 default_value='false'),
+          DeclareLaunchArgument('rtcm_message_package',  default_value='mavros_msgs'),
 
           # Pass an environment variable to the node
           SetEnvironmentVariable(name='NTRIP_CLIENT_DEBUG', value=LaunchConfiguration('debug')),
@@ -46,7 +47,10 @@ def generate_launch_description():
                     'password': LaunchConfiguration('password'),
 
                     # Not sure if this will be looked at by other ndoes, but this frame ID will be added to the RTCM messages published by this node
-                    'rtcm_frame_id': 'odom'
+                    'rtcm_frame_id': 'odom',
+
+                    # Use this parameter to change the type of RTCM message published by the node. Defaults to "mavros_msgs", but we also support "rtcm_msgs"
+                    'rtcm_message_package': LaunchConfiguration('rtcm_message_package'),
                   }
                 ],
                 # Uncomment the following section and replace "/gq7/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested
