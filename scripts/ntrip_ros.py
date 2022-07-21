@@ -11,6 +11,7 @@ from mavros_msgs.msg import RTCM
 from nmea_msgs.msg import Sentence
 
 from ntrip_client.ntrip_client import NTRIPClient
+from ntrip_client.nmea_parser import NMEA_DEFAULT_MAX_LENGTH, NMEA_DEFAULT_MIN_LENGTH
 
 
 class NTRIPRos(Node):
@@ -33,7 +34,9 @@ class NTRIPRos(Node):
         ('authenticate', False),
         ('username', ''),
         ('password', ''),
-        ('rtcm_frame_id', 'odom')
+        ('rtcm_frame_id', 'odom'),
+        ('nmea_max_length', NMEA_DEFAULT_MAX_LENGTH),
+        ('nmea_min_length', NMEA_DEFAULT_MIN_LENGTH),
       ]
     )
 
@@ -69,6 +72,10 @@ class NTRIPRos(Node):
     # Read an optional Frame ID from the config
     self._rtcm_frame_id = self.get_parameter('rtcm_frame_id').value
 
+    # Read some options for parsing NMEA from the launch file
+    nmea_max_length = self.get_parameter('nmea_max_length').value
+    nmea_min_length = self.get_parameter('nmea_min_length').value
+
     # Setup the RTCM publisher
     self._rtcm_pub = self.create_publisher(RTCM, 'rtcm', 10)
 
@@ -85,6 +92,10 @@ class NTRIPRos(Node):
       loginfo=self.get_logger().info,
       logdebug=self.get_logger().debug
     )
+
+    # Set parameters on the client
+    self._client.nmea_parser.nmea_max_length = nmea_max_length
+    self._client.nmea_parser.nmea_min_length = nmea_min_length
 
   def run(self):
     # Connect the client
