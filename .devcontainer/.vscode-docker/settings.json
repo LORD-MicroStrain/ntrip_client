@@ -1,11 +1,13 @@
 {
     "python.autoComplete.extraPaths": [
+        "/home/microstrain/catkin_ws/src/ntrip_client/src",
         "/home/microstrain/catkin_ws/devel/lib/python3/dist-packages",
         "/home/microstrain/catkin_ws/devel/lib/python2.7/dist-packages",
         "/opt/ros/noetic/lib/python3/dist-packages",
         "/opt/ros/melodic/lib/python2.7/dist-packages"
     ],
     "python.analysis.extraPaths": [
+        "/home/microstrain/catkin_ws/src/ntrip_client/src",
         "/home/microstrain/catkin_ws/devel/lib/python3/dist-packages",
         "/home/microstrain/catkin_ws/devel/lib/python2.7/dist-packages",
         "/opt/ros/noetic/lib/python3/dist-packages",
