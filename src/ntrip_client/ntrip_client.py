@@ -15,7 +15,8 @@ _SOURCETABLE_RESPONSES = [
 ]
 _SUCCESS_RESPONSES = [
   'ICY 200 OK',
-  'HTTP/1.0 200 OK'
+  'HTTP/1.0 200 OK',
+  'HTTP/1.1 200 OK'
 ]
 _UNAUTHORIZED_RESPONSES = [
   '401'
@@ -24,7 +25,9 @@ _UNAUTHORIZED_RESPONSES = [
 
 class NTRIPClient:
 
-  def __init__(self, host, port, mountpoint, ntrip_version, username, password, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
+  def __init__(self, host, port, mountpoint, ntrip_version, username, password,
+      reconnect_attempt_max=10, reconnect_attempt_wait_seconds=5, rtcm_timeout_seconds=4,
+      logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
     # Bit of a strange pattern here, but save the log functions so we can be agnostic of ROS
     self._logerr = logerr
     self._logwarn = logwarn
@@ -42,19 +45,6 @@ class NTRIPClient:
     else:
       self._basic_credentials = None
 
-    # Reconnect info
-    # TODO(robbiefish): Make these configurable?
-    self._reconnect_attempt_count = 0
-    self._reconnect_attempt_max = 10
-    self._reconnect_attempt_wait_seconds = 5
-    self._nmea_send_failed_count = 0
-    self._nmea_send_failed_max = 3
-    self._read_zero_bytes_count = 0
-    self._read_zero_bytes_max = 5
-    self._first_rtcm_received = False
-    self._recv_rtcm_timeout_seconds = 4
-    self._recv_rtcm_last_packet_timestamp = 0
-
     # Setup some parsers to parse incoming messages
     self._rtcm_parser = RTCMParser(
       logerr=logerr,
@@ -70,7 +60,21 @@ class NTRIPClient:
     )
 
     # Setup some state
+    self._shutdown = False
     self._connected = False
+
+    # Reconnect info
+    self._reconnect_attempt_count = 0
+    self._reconnect_attempt_max = reconnect_attempt_max
+    self._reconnect_attempt_wait_seconds = reconnect_attempt_wait_seconds
+    self._nmea_send_failed_count = 0
+    self._nmea_send_failed_max = 5
+    self._read_zero_bytes_count = 0
+    self._read_zero_bytes_max = 5
+    self._first_rtcm_received = False
+    self._recv_rtcm_timeout_seconds = rtcm_timeout_seconds
+    self._recv_rtcm_last_packet_timestamp = 0
+
 
   def connect(self):
     # Create a socket object that we will use to connect to the server
@@ -150,7 +154,7 @@ class NTRIPClient:
     
   def reconnect(self):
     if self._connected:
-      while True:
+      while not self._shutdown:
         self._reconnect_attempt_count += 1
         self.disconnect()
         connect_success = self.connect()
@@ -248,6 +252,11 @@ class NTRIPClient:
 
     # Send the data to the RTCM parser to parse it
     return self._rtcm_parser.parse(data) if data else []
+
+  def shutdown(self):
+    # Set some state, and then disconnect
+    self._shutdown = True
+    self.disconnect()
 
   def _form_request(self):
     if self._ntrip_version != None and self._ntrip_version != '':

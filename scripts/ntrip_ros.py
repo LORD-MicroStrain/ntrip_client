@@ -33,7 +33,10 @@ class NTRIPRos(Node):
         ('authenticate', False),
         ('username', ''),
         ('password', ''),
-        ('rtcm_frame_id', 'odom')
+        ('rtcm_frame_id', 'odom'),
+        ('reconnect_attempt_max', 10),
+        ('reconnect_attempt_wait_seconds', 5),
+        ('rtcm_timeout_seconds', 4),
       ]
     )
 
@@ -69,8 +72,13 @@ class NTRIPRos(Node):
     # Read an optional Frame ID from the config
     self._rtcm_frame_id = self.get_parameter('rtcm_frame_id').value
 
+    # Get some timeout parameters for the NTRIP client
+    reconnect_attempt_max = self.get_parameter('reconnect_attempt_max').value
+    reconnect_attempt_wait_seconds = self.get_parameter('reconnect_attempt_wait_seconds').value
+    rtcm_timeout_seconds = self.get_parameter('rtcm_timeout_seconds').value
+
     # Setup the RTCM publisher
-    self._rtcm_pub = self.create_publisher(RTCM, 'rtcm', 10)
+    self._rtcm_pub = self.create_publisher(Sentence, 'rtcm', 10)
 
     # Initialize the client
     self._client = NTRIPClient(
@@ -80,6 +88,9 @@ class NTRIPRos(Node):
       ntrip_version=ntrip_version,
       username=username,
       password=password,
+      reconnect_attempt_max=reconnect_attempt_max,
+      reconnect_attempt_wait_seconds=reconnect_attempt_wait_seconds,
+      rtcm_timeout_seconds=rtcm_timeout_seconds,
       logerr=self.get_logger().error,
       logwarn=self.get_logger().warning,
       loginfo=self.get_logger().info,
@@ -114,6 +125,8 @@ class NTRIPRos(Node):
 
   def publish_rtcm(self):
     for raw_rtcm in self._client.recv_rtcm():
+      pass
+      '''
       self._rtcm_pub.publish(RTCM(
         header=Header(
           stamp=self.get_clock().now().to_msg(),
@@ -121,6 +134,7 @@ class NTRIPRos(Node):
         ),
         data=raw_rtcm
       ))
+      '''
 
 
 if __name__ == '__main__':
