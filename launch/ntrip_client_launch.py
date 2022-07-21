@@ -47,6 +47,10 @@ def generate_launch_description():
 
                     # Not sure if this will be looked at by other ndoes, but this frame ID will be added to the RTCM messages published by this node
                     'rtcm_frame_id': 'odom'
+
+                    # Optional parameters that will allow for longer or shorter NMEA messages. Standard max length for NMEA is 82
+                    'nmea_max_length': 82,
+                    'nmea_min_length': 3,
                   }
                 ],
                 # Uncomment the following section and replace "/gq7/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested

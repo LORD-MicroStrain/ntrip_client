@@ -5,7 +5,7 @@ import socket
 import select
 import logging
 
-from .nmea_parser import NMEAParser
+from .nmea_parser import NMEAParser, NMEA_DEFAULT_MAX_LENGTH, NMEA_DEFAULT_MIN_LENGTH
 from .rtcm_parser import RTCMParser
 
 _CHUNK_SIZE = 1024
@@ -45,13 +45,13 @@ class NTRIPClient:
     self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Setup some parsers to parse incoming messages
-    self._rtcm_parser = RTCMParser(
+    self.rtcm_parser = RTCMParser(
       logerr=logerr,
       logwarn=logwarn,
       loginfo=loginfo,
       logdebug=logdebug
     )
-    self._nmea_parser = NMEAParser(
+    self.nmea_parser = NMEAParser(
       logerr=logerr,
       logwarn=logwarn,
       loginfo=loginfo,
@@ -137,7 +137,7 @@ class NTRIPClient:
       sentence = sentence + '\r\n'
 
     # Check if it is a valid NMEA sentence
-    if not self._nmea_parser.is_valid_sentence(sentence):
+    if not self.nmea_parser.is_valid_sentence(sentence):
       self._logwarn("Invalid NMEA sentence, not sending to server")
       return
 
@@ -170,7 +170,7 @@ class NTRIPClient:
     self._logdebug('Read {} bytes'.format(len(data)))
 
     # Send the data to the RTCM parser to parse it
-    return self._rtcm_parser.parse(data) if data else []
+    return self.rtcm_parser.parse(data) if data else []
 
   def _form_request(self):
     if self._ntrip_version != None and self._ntrip_version != '':
