@@ -5,7 +5,7 @@ import socket
 import select
 import logging
 
-from .nmea_parser import NMEAParser, NMEA_DEFAULT_MAX_LENGTH, NMEA_DEFAULT_MIN_LENGTH
+from .nmea_parser import NMEAParser
 from .rtcm_parser import RTCMParser
 
 _CHUNK_SIZE = 1024
