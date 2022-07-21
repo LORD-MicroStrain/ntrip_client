@@ -12,7 +12,7 @@
   <arg name="password"               default = "pass" />
   <arg name="ntrip_version"          default = "" />
   <arg name="debug"                  default = "false" />
-  <arg name="rtcm_msg_pkg"           default = "mavros_msgs" />
+  <arg name="rtcm_message_package"   default = "mavros_msgs" />
 
   <!-- Set the log level to debug -->
   <env name="NTRIP_CLIENT_DEBUG" value="$(arg debug)" />
@@ -41,7 +41,7 @@
     <param name="rtcm_frame_id" value="odom" />
 
     <!-- Use this parameter to change the type of RTCM message published by the node. Defaults to "mavros_msgs", but we also support "rtcm_msgs" -->
-    <param name="rtcm_msg_pkg" value="$(arg rtcm_msg_pkg)" />
+    <param name="rtcm_message_package" value="$(arg rtcm_message_package)" />
 
     <!-- Uncomment the following section and replace "/gx5/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested -->
     <!--<remap from="/ntrip_client/nmea" to="/gx5/nmea/sentence" />-->

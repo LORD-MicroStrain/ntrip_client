@@ -64,25 +64,25 @@ class NTRIPRos:
     self._rtcm_frame_id = rospy.get_param('~rtcm_frame_id', 'odom')
 
     # Determine the type of RTCM message that will be published
-    rtcm_msgs_pkg = rospy.get_param('~rtcm_msg_pkg', _MAVROS_MSGS_NAME)
-    if rtcm_msgs_pkg == _MAVROS_MSGS_NAME:
+    rtcm_message_package = rospy.get_param('~rtcm_message_package', _MAVROS_MSGS_NAME)
+    if rtcm_message_package == _MAVROS_MSGS_NAME:
       if have_mavros_msgs:
-        self._rtcm_msg_type = mavros_msgs_RTCM
+        self._rtcm_message_type = mavros_msgs_RTCM
         self._create_rtcm_message = self._create_mavros_msgs_rtcm_message
       else:
-        rospy.logfatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_msgs_pkg))
-    elif rtcm_msgs_pkg == _RTCM_MSGS_NAME:
+        rospy.logfatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_message_package))
+    elif rtcm_message_package == _RTCM_MSGS_NAME:
       if have_rtcm_msgs:
-        self._rtcm_msg_type = rtcm_msgs_RTCM
+        self._rtcm_message_type = rtcm_msgs_RTCM
         self._create_rtcm_message = self._create_rtcm_msgs_rtcm_message
       else:
-        rospy.logfatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_msgs_pkg))
+        rospy.logfatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_message_package))
     else:
-      rospy.logfatal('The RTCM package {} is not a valid option. Please choose between the following packages {}'.format(rtcm_msgs_pkg, str.join([_MAVROS_MSGS_NAME, _RTCM_MSGS_NAME])))
+      rospy.logfatal('The RTCM package {} is not a valid option. Please choose between the following packages {}'.format(rtcm_message_package, str.join([_MAVROS_MSGS_NAME, _RTCM_MSGS_NAME])))
 
     # Setup the RTCM publisher
     self._rtcm_timer = None
-    self._rtcm_pub = rospy.Publisher('rtcm', self._rtcm_msg_type, queue_size=10)
+    self._rtcm_pub = rospy.Publisher('rtcm', self._rtcm_message_type, queue_size=10)
 
     # Initialize the client
     self._client = NTRIPClient(
