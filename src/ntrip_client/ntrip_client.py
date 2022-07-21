@@ -22,12 +22,14 @@ _UNAUTHORIZED_RESPONSES = [
   '401'
 ]
 
-
 class NTRIPClient:
 
-  def __init__(self, host, port, mountpoint, ntrip_version, username, password,
-      reconnect_attempt_max=10, reconnect_attempt_wait_seconds=5, rtcm_timeout_seconds=4,
-      logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
+  # Public constants
+  DEFAULT_RECONNECT_ATTEMPT_MAX = 10
+  DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS = 5
+  DEFAULT_RTCM_TIMEOUT_SECONDS = 4
+
+  def __init__(self, host, port, mountpoint, ntrip_version, username, password, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
     # Bit of a strange pattern here, but save the log functions so we can be agnostic of ROS
     self._logerr = logerr
     self._logwarn = logwarn
@@ -63,18 +65,19 @@ class NTRIPClient:
     self._shutdown = False
     self._connected = False
 
-    # Reconnect info
+    # Private reconnect info
     self._reconnect_attempt_count = 0
-    self._reconnect_attempt_max = reconnect_attempt_max
-    self._reconnect_attempt_wait_seconds = reconnect_attempt_wait_seconds
     self._nmea_send_failed_count = 0
     self._nmea_send_failed_max = 5
     self._read_zero_bytes_count = 0
     self._read_zero_bytes_max = 5
     self._first_rtcm_received = False
-    self._recv_rtcm_timeout_seconds = rtcm_timeout_seconds
     self._recv_rtcm_last_packet_timestamp = 0
 
+    # Public reconnect info
+    self.reconnect_attempt_max = self.DEFAULT_RECONNECT_ATTEMPT_MAX
+    self.reconnect_attempt_wait_seconds = self.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS
+    self.rtcm_timeout_seconds = self.DEFAULT_RTCM_TIMEOUT_SECONDS
 
   def connect(self):
     # Create a socket object that we will use to connect to the server
@@ -158,10 +161,10 @@ class NTRIPClient:
         self._reconnect_attempt_count += 1
         self.disconnect()
         connect_success = self.connect()
-        if not connect_success and self._reconnect_attempt_count < self._reconnect_attempt_max:
-          self._logerr('Reconnect to http://{}:{} failed. Retrying in {} seconds'.format(self._host, self._port, self._reconnect_attempt_wait_seconds))
-          time.sleep(self._reconnect_attempt_wait_seconds)
-        elif self._reconnect_attempt_count >= self._reconnect_attempt_max:
+        if not connect_success and self._reconnect_attempt_count < self.reconnect_attempt_max:
+          self._logerr('Reconnect to http://{}:{} failed. Retrying in {} seconds'.format(self._host, self._port, self.reconnect_attempt_wait_seconds))
+          time.sleep(self.reconnect_attempt_wait_seconds)
+        elif self._reconnect_attempt_count >= self.reconnect_attempt_max:
           self._reconnect_attempt_count = 0
           raise Exception("Reconnect was attempted {} times, but never succeeded".format(self._reconnect_attempt_count))
           break
@@ -208,8 +211,8 @@ class NTRIPClient:
       return []
     
     # If it has been too long since we received an RTCM packet, reconnect
-    if time.time() - self._recv_rtcm_timeout_seconds >= self._recv_rtcm_last_packet_timestamp and self._first_rtcm_received:
-      self._logerr('RTCM data not received for {} seconds, reconnecting'.format(self._recv_rtcm_timeout_seconds))
+    if time.time() - self.rtcm_timeout_seconds >= self._recv_rtcm_last_packet_timestamp and self._first_rtcm_received:
+      self._logerr('RTCM data not received for {} seconds, reconnecting'.format(self.rtcm_timeout_seconds))
       self.reconnect()
       self._first_rtcm_received = False
 

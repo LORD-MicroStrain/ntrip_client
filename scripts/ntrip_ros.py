@@ -34,9 +34,9 @@ class NTRIPRos(Node):
         ('username', ''),
         ('password', ''),
         ('rtcm_frame_id', 'odom'),
-        ('reconnect_attempt_max', 10),
-        ('reconnect_attempt_wait_seconds', 5),
-        ('rtcm_timeout_seconds', 4),
+        ('reconnect_attempt_max', NTRIPClient.DEFAULT_RECONNECT_ATTEMPT_MAX),
+        ('reconnect_attempt_wait_seconds', NTRIPClient.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS),
+        ('rtcm_timeout_seconds', NTRIPClient.DEFAULT_RTCM_TIMEOUT_SECONDS),
       ]
     )
 
@@ -88,14 +88,16 @@ class NTRIPRos(Node):
       ntrip_version=ntrip_version,
       username=username,
       password=password,
-      reconnect_attempt_max=reconnect_attempt_max,
-      reconnect_attempt_wait_seconds=reconnect_attempt_wait_seconds,
-      rtcm_timeout_seconds=rtcm_timeout_seconds,
       logerr=self.get_logger().error,
       logwarn=self.get_logger().warning,
       loginfo=self.get_logger().info,
       logdebug=self.get_logger().debug
     )
+
+    # Set parameters on the client
+    self._client.reconnect_attempt_max = reconnect_attempt_max
+    self._client.reconnect_attempt_wait_seconds = reconnect_attempt_wait_seconds
+    self._client.rtcm_timeout_seconds = rtcm_timeout_seconds
 
   def run(self):
     # Connect the client
