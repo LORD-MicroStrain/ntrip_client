@@ -78,7 +78,7 @@ class NTRIPRos(Node):
     rtcm_timeout_seconds = self.get_parameter('rtcm_timeout_seconds').value
 
     # Setup the RTCM publisher
-    self._rtcm_pub = self.create_publisher(Sentence, 'rtcm', 10)
+    self._rtcm_pub = self.create_publisher(RTCM, 'rtcm', 10)
 
     # Initialize the client
     self._client = NTRIPClient(
