@@ -33,7 +33,10 @@ class NTRIPRos(Node):
         ('authenticate', False),
         ('username', ''),
         ('password', ''),
-        ('rtcm_frame_id', 'odom')
+        ('rtcm_frame_id', 'odom'),
+        ('reconnect_attempt_max', NTRIPClient.DEFAULT_RECONNECT_ATTEMPT_MAX),
+        ('reconnect_attempt_wait_seconds', NTRIPClient.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS),
+        ('rtcm_timeout_seconds', NTRIPClient.DEFAULT_RTCM_TIMEOUT_SECONDS),
       ]
     )
 
@@ -69,6 +72,11 @@ class NTRIPRos(Node):
     # Read an optional Frame ID from the config
     self._rtcm_frame_id = self.get_parameter('rtcm_frame_id').value
 
+    # Get some timeout parameters for the NTRIP client
+    reconnect_attempt_max = self.get_parameter('reconnect_attempt_max').value
+    reconnect_attempt_wait_seconds = self.get_parameter('reconnect_attempt_wait_seconds').value
+    rtcm_timeout_seconds = self.get_parameter('rtcm_timeout_seconds').value
+
     # Setup the RTCM publisher
     self._rtcm_pub = self.create_publisher(RTCM, 'rtcm', 10)
 
@@ -85,6 +93,11 @@ class NTRIPRos(Node):
       loginfo=self.get_logger().info,
       logdebug=self.get_logger().debug
     )
+
+    # Set parameters on the client
+    self._client.reconnect_attempt_max = reconnect_attempt_max
+    self._client.reconnect_attempt_wait_seconds = reconnect_attempt_wait_seconds
+    self._client.rtcm_timeout_seconds = rtcm_timeout_seconds
 
   def run(self):
     # Connect the client
