@@ -36,8 +36,15 @@
     <param name="username" value="$(arg username)" />
     <param name="password" value="$(arg password)" />
 
-    <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages publishe by this node -->
+    <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages published by this node -->
     <param name="rtcm_frame_id" value="odom" />
+
+    <!-- Will affect how many times the node will attempt to reconnect before exiting, and how long it will wait in between attempts when a reconnect occurs -->
+    <param name="reconnect_attempt_max" value="10" />
+    <param name="reconnect_attempt_wait_seconds" value="5" />
+
+    <!-- How many seconds is acceptable in between receiving RTCM. If RTCM is not received for this duration, the node will attempt to reconnect -->
+    <param name="rtcm_timeout_seconds" value="4" />
 
     <!-- Uncomment the following section and replace "/gx5/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested -->
     <!--<remap from="/ntrip_client/nmea" to="/gx5/nmea/sentence" />-->
