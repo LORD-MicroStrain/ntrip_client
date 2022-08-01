@@ -15,6 +15,10 @@ def generate_launch_description():
           DeclareLaunchArgument('authenticate',  default_value='True'),
           DeclareLaunchArgument('username',      default_value='user'),
           DeclareLaunchArgument('password',      default_value='pass'),
+          DeclareLaunchArgument('ssl',           default_value='False'),
+          DeclareLaunchArgument('cert',          default_value='None'),
+          DeclareLaunchArgument('key',           default_value='None'),
+          DeclareLaunchArgument('ca_cert',       default_value='None'),
           DeclareLaunchArgument('debug',         default_value='false'),
 
           # Pass an environment variable to the node
@@ -44,6 +48,16 @@ def generate_launch_description():
                     # If authenticate is set the true, we will use these to authenticate with the server
                     'username': LaunchConfiguration('username'),
                     'password': LaunchConfiguration('password'),
+
+                    # Whether to connect with SSL. cert, key, and ca_cert options will only take effect if this is true
+                    'ssl': LaunchConfiguration('ssl'),
+
+                    # If the NTRIP caster uses cert based authentication, you can specify the cert and keys to use with these options
+                    'cert': LaunchConfiguration('cert'),
+                    'key':  LaunchConfiguration('key'),
+
+                    # If the NTRIP caster uses self signed certs, or you need to use a different CA chain, specify the path to the file here
+                    'ca_cert': LaunchConfiguration('ca_cert'),
 
                     # Not sure if this will be looked at by other ndoes, but this frame ID will be added to the RTCM messages published by this node
                     'rtcm_frame_id': 'odom'

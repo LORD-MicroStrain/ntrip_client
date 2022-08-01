@@ -33,6 +33,10 @@ class NTRIPRos(Node):
         ('authenticate', False),
         ('username', ''),
         ('password', ''),
+        ('ssl', False),
+        ('cert', 'None'),
+        ('key', 'None'),
+        ('ca_cert', 'None'),
         ('rtcm_frame_id', 'odom')
       ]
     )
@@ -85,6 +89,18 @@ class NTRIPRos(Node):
       loginfo=self.get_logger().info,
       logdebug=self.get_logger().debug
     )
+
+    # Get some SSL parameters for the NTRIP client
+    self._client.ssl = self.get_parameter('ssl').value
+    self._client.cert = self.get_parameter('cert').value
+    self._client.key = self.get_parameter('key').value
+    self._client.ca_cert = self.get_parameter('ca_cert').value
+    if self._client.cert == 'None':
+      self._client.cert = None
+    if self._client.key == 'None':
+      self._client.key = None
+    if self._client.ca_cert == 'None':
+      self._client.ca_cert = None
 
   def run(self):
     # Connect the client
