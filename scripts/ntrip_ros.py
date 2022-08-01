@@ -76,6 +76,10 @@ class NTRIPRos:
     self._client.key = rospy.get_param('~key', None)
     self._client.ca_cert = rospy.get_param('~ca_cert', None)
 
+    # Set parameters on the client
+    self._client.reconnect_attempt_max = rospy.get_param('~reconnect_attempt_max', NTRIPClient.DEFAULT_RECONNECT_ATTEMPT_MAX)
+    self._client.reconnect_attempt_wait_seconds = rospy.get_param('~reconnect_attempt_wait_seconds', NTRIPClient.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS)
+    self._client.rtcm_timeout_seconds = rospy.get_param('~rtcm_timeout_seconds', NTRIPClient.DEFAULT_RTCM_TIMEOUT_SECONDS)
 
   def run(self):
     # Setup a shutdown hook
@@ -102,7 +106,7 @@ class NTRIPRos:
       self._rtcm_timer.shutdown()
       self._rtcm_timer.join()
     rospy.loginfo('Disconnecting NTRIP client')
-    self._client.disconnect()
+    self._client.shutdown()
 
   def subscribe_nmea(self, nmea):
     # Just extract the NMEA from the message, and send it right to the server
