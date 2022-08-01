@@ -52,11 +52,6 @@ class NTRIPRos:
     # Read an optional Frame ID from the config
     self._rtcm_frame_id = rospy.get_param('~rtcm_frame_id', 'odom')
 
-    # Get some timeout parameters for the NTRIP client
-    reconnect_attempt_max = rospy.get_param('~reconnect_attempt_max', NTRIPClient.DEFAULT_RECONNECT_ATTEMPT_MAX)
-    reconnect_attempt_wait_seconds = rospy.get_param('~reconnect_attempt_wait_seconds', NTRIPClient.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS)
-    rtcm_timeout_seconds = rospy.get_param('~rtcm_timeout_seconds', NTRIPClient.DEFAULT_RTCM_TIMEOUT_SECONDS)
-
     # Setup the RTCM publisher
     self._rtcm_timer = None
     self._rtcm_pub = rospy.Publisher('rtcm', RTCM, queue_size=10)
@@ -75,10 +70,16 @@ class NTRIPRos:
       logdebug=rospy.logdebug
     )
 
+    # Get some SSL parameters for the NTRIP client
+    self._client.ssl = rospy.get_param('~ssl', False)
+    self._client.cert = rospy.get_param('~cert', None)
+    self._client.key = rospy.get_param('~key', None)
+    self._client.ca_cert = rospy.get_param('~ca_cert', None)
+
     # Set parameters on the client
-    self._client.reconnect_attempt_max = reconnect_attempt_max
-    self._client.reconnect_attempt_wait_seconds = reconnect_attempt_wait_seconds
-    self._client.rtcm_timeout_seconds = rtcm_timeout_seconds
+    self._client.reconnect_attempt_max = rospy.get_param('~reconnect_attempt_max', NTRIPClient.DEFAULT_RECONNECT_ATTEMPT_MAX)
+    self._client.reconnect_attempt_wait_seconds = rospy.get_param('~reconnect_attempt_wait_seconds', NTRIPClient.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS)
+    self._client.rtcm_timeout_seconds = rospy.get_param('~rtcm_timeout_seconds', NTRIPClient.DEFAULT_RTCM_TIMEOUT_SECONDS)
 
   def run(self):
     # Setup a shutdown hook

@@ -11,6 +11,10 @@
   <arg name="username"               default = "user" />
   <arg name="password"               default = "pass" />
   <arg name="ntrip_version"          default = "" />
+  <arg name="ssl"                    default = "false" />
+  <arg name="cert"                   default = "" />
+  <arg name="key"                    default = "" />
+  <arg name="ca_cert"                default = "" />
   <arg name="debug"                  default = "false" />
 
   <!-- Set the log level to debug -->
@@ -35,6 +39,16 @@
     <!-- If authenticate is set to true, we will use these to authenticate with the server -->
     <param name="username" value="$(arg username)" />
     <param name="password" value="$(arg password)" />
+
+    <!-- Whether to connect with SSL. cert, key, and ca_cert options will only take effect if this is true -->
+    <param name="ssl" value="$(arg ssl)" />
+
+    <!-- If the NTRIP caster uses cert based authentication, you can specify the cert and keys to use with these options -->
+    <param name="cert" value="$(arg cert)" />
+    <param name="key"  value="$(arg key)" />
+
+    <!-- If the NTRIP caster uses self signed certs, or you need to use a different CA chain, specify the path to the file here -->
+    <param name="ca_cert" value="$(arg ca_cert)" />
 
     <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages published by this node -->
     <param name="rtcm_frame_id" value="odom" />

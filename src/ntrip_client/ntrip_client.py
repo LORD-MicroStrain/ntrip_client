@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import ssl
 import time
 import base64
 import socket
@@ -47,6 +48,10 @@ class NTRIPClient:
     else:
       self._basic_credentials = None
 
+    # Initialize this so we don't throw an exception when closing
+    self._raw_socket = None
+    self._server_socket = None
+
     # Setup some parsers to parse incoming messages
     self._rtcm_parser = RTCMParser(
       logerr=logerr,
@@ -60,6 +65,12 @@ class NTRIPClient:
       loginfo=loginfo,
       logdebug=logdebug
     )
+
+    # Public SSL configuration
+    self.ssl = False
+    self.cert = None
+    self.key = None
+    self.ca_cert = None
 
     # Setup some state
     self._shutdown = False
@@ -92,6 +103,19 @@ class NTRIPClient:
         'Unable to connect socket to server at http://{}:{}'.format(self._host, self._port))
       self._logerr('Exception: {}'.format(str(e)))
       return False
+    
+    # If SSL, wrap the socket
+    if self.ssl:
+      # Configre the context based on the config
+      self._ssl_context = ssl.create_default_context()
+      if self.cert:
+        self._ssl_context.load_cert_chain(self.cert, self.key)
+      if self.ca_cert:
+        self._ssl_context.load_verify_locations(self.ca_cert)
+
+      # Save the old socket for later just in case, and create a new SSL socket
+      self._raw_socket = self._server_socket
+      self._server_socket = self._ssl_context.wrap_socket(self._raw_socket, server_hostname=self._host)
 
     # Send the HTTP Request
     try:
@@ -145,12 +169,18 @@ class NTRIPClient:
     # Disconnect the socket
     self._connected = False
     try:
-      self._server_socket.shutdown(socket.SHUT_RDWR)
+      if self._server_socket:
+        self._server_socket.shutdown(socket.SHUT_RDWR)
+      if self._raw_socket:
+        self._raw_socket.shutdown(socket.SHUT_RDWR)
     except Exception as e:
       self._logdebug('Encountered exception when shutting down the socket. This can likely be ignored')
       self._logdebug('Exception: {}'.format(e))
     try:
-      self._server_socket.close()
+      if self._server_socket:
+        self._server_socket.close()
+      if self._raw_socket:
+        self._raw_socket.close()
     except Exception as e:
       self._logdebug('Encountered exception when closing the socket. This can likely be ignored')
       self._logdebug('Exception: {}'.format(e))
