@@ -70,6 +70,13 @@ class NTRIPRos:
       logdebug=rospy.logdebug
     )
 
+    # Get some SSL parameters for the NTRIP client
+    self._client.ssl = rospy.get_param('~ssl', False)
+    self._client.cert = rospy.get_param('~cert', None)
+    self._client.key = rospy.get_param('~key', None)
+    self._client.ca_cert = rospy.get_param('~ca_cert', None)
+
+
   def run(self):
     # Setup a shutdown hook
     rospy.on_shutdown(self.stop)

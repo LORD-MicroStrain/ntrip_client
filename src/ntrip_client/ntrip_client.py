@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import ssl
 import base64
 import socket
 import select
@@ -44,6 +45,9 @@ class NTRIPClient:
     # Create a socket object that we will use to connect to the server
     self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+    # Initialize this so we don't throw an exception when closing
+    self._raw_socket = None
+
     # Setup some parsers to parse incoming messages
     self._rtcm_parser = RTCMParser(
       logerr=logerr,
@@ -58,6 +62,12 @@ class NTRIPClient:
       logdebug=logdebug
     )
 
+    # Public SSL configuration
+    self.ssl = False
+    self.cert = None
+    self.key = None
+    self.ca_cert = None
+
     # Setup some state
     self._connected = False
 
@@ -70,6 +80,19 @@ class NTRIPClient:
         'Unable to connect socket to server at http://{}:{}'.format(self._host, self._port))
       self._logerr('Exception: {}'.format(str(e)))
       return False
+    
+    # If SSL, wrap the socket
+    if self.ssl:
+      # Configre the context based on the config
+      self._ssl_context = ssl.create_default_context()
+      if self.cert:
+        self._ssl_context.load_cert_chain(self.cert, self.key)
+      if self.ca_cert:
+        self._ssl_context.load_verify_locations(self.ca_cert)
+
+      # Save the old socket for later just in case, and create a new SSL socket
+      self._raw_socket = self._server_socket
+      self._server_socket = self._ssl_context.wrap_socket(self._raw_socket, server_hostname=self._host)
 
     # Send the HTTP Request
     try:
@@ -123,6 +146,8 @@ class NTRIPClient:
   def disconnect(self):
     # Disconnect the socket
     self._server_socket.close()
+    if self._raw_socket:
+      self._raw_socket.close()
     self._connected = False
 
   def send_nmea(self, sentence):
