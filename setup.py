@@ -6,7 +6,7 @@ package_name = 'ntrip_client'
 
 setup(
     name=package_name,
-    version='0.0.0',
+    version='1.2.0',
     packages=[package_name],
     package_dir={'': 'src'},
     data_files=[

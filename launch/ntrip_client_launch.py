@@ -8,14 +8,19 @@ from launch.actions import SetEnvironmentVariable
 def generate_launch_description():
       return LaunchDescription([
           # Declare arguments with default values
-          DeclareLaunchArgument('host',          default_value='20.185.11.35'),
-          DeclareLaunchArgument('port',          default_value='2101'),
-          DeclareLaunchArgument('mountpoint',    default_value='VTRI_RTCM3'),
-          DeclareLaunchArgument('ntrip_version', default_value='None'),
-          DeclareLaunchArgument('authenticate',  default_value='True'),
-          DeclareLaunchArgument('username',      default_value='user'),
-          DeclareLaunchArgument('password',      default_value='pass'),
-          DeclareLaunchArgument('debug',         default_value='false'),
+          DeclareLaunchArgument('host',                  default_value='20.185.11.35'),
+          DeclareLaunchArgument('port',                  default_value='2101'),
+          DeclareLaunchArgument('mountpoint',            default_value='VTRI_RTCM3'),
+          DeclareLaunchArgument('ntrip_version',         default_value='None'),
+          DeclareLaunchArgument('authenticate',          default_value='True'),
+          DeclareLaunchArgument('username',              default_value='user'),
+          DeclareLaunchArgument('password',              default_value='pass'),
+          DeclareLaunchArgument('ssl',                   default_value='False'),
+          DeclareLaunchArgument('cert',                  default_value='None'),
+          DeclareLaunchArgument('key',                   default_value='None'),
+          DeclareLaunchArgument('ca_cert',               default_value='None'),
+          DeclareLaunchArgument('debug',                 default_value='false'),
+          DeclareLaunchArgument('rtcm_message_package',  default_value='mavros_msgs'),
 
           # Pass an environment variable to the node
           SetEnvironmentVariable(name='NTRIP_CLIENT_DEBUG', value=LaunchConfiguration('debug')),
@@ -45,12 +50,32 @@ def generate_launch_description():
                     'username': LaunchConfiguration('username'),
                     'password': LaunchConfiguration('password'),
 
+                    # Whether to connect with SSL. cert, key, and ca_cert options will only take effect if this is true
+                    'ssl': LaunchConfiguration('ssl'),
+
+                    # If the NTRIP caster uses cert based authentication, you can specify the cert and keys to use with these options
+                    'cert': LaunchConfiguration('cert'),
+                    'key':  LaunchConfiguration('key'),
+
+                    # If the NTRIP caster uses self signed certs, or you need to use a different CA chain, specify the path to the file here
+                    'ca_cert': LaunchConfiguration('ca_cert'),
+
                     # Not sure if this will be looked at by other ndoes, but this frame ID will be added to the RTCM messages published by this node
                     'rtcm_frame_id': 'odom'
 
                     # Optional parameters that will allow for longer or shorter NMEA messages. Standard max length for NMEA is 82
                     'nmea_max_length': 82,
                     'nmea_min_length': 3,
+
+                    # Use this parameter to change the type of RTCM message published by the node. Defaults to "mavros_msgs", but we also support "rtcm_msgs"
+                    'rtcm_message_package': LaunchConfiguration('rtcm_message_package'),
+
+                    # Will affect how many times the node will attempt to reconnect before exiting, and how long it will wait in between attempts when a reconnect occurs
+                    'reconnect_attempt_max': 10,
+                    'reconnect_attempt_wait_seconds': 5,
+
+                    # How many seconds is acceptable in between receiving RTCM. If RTCM is not received for this duration, the node will attempt to reconnect
+                    'rtcm_timeout_seconds': 4
                   }
                 ],
                 # Uncomment the following section and replace "/gq7/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested
