@@ -54,6 +54,10 @@
     <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages published by this node -->
     <param name="rtcm_frame_id" value="odom" />
 
+    <!-- Optional parameters that will allow for longer or shorter NMEA messages. Standard max length for NMEA is 82 -->
+    <param name="nmea_max_length" value="82" />
+    <param name="nmea_min_length" value="3" />
+
     <!-- Use this parameter to change the type of RTCM message published by the node. Defaults to "mavros_msgs", but we also support "rtcm_msgs" -->
     <param name="rtcm_message_package" value="$(arg rtcm_message_package)" />
 
