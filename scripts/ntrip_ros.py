@@ -6,8 +6,19 @@ import json
 
 import rospy
 from std_msgs.msg import Header
-from mavros_msgs.msg import RTCM
-from rtcm_msgs.msg import Message
+
+try:
+    from mavros_msgs.msg import RTCM
+    HAVE_MAVROS = True
+except:
+    HAVE_MAVROS = False
+
+try:
+    from rtcm_msgs.msg import Message
+    HAVE_RTCM = True
+except:
+    HAVE_RTCM = False
+
 from nmea_msgs.msg import Sentence
 
 from ntrip_client.ntrip_client import NTRIPClient
@@ -59,8 +70,16 @@ class NTRIPRos:
     # Setup the RTCM publisher
     self._rtcm_timer = None
     if self.message_type == "mavros_msgs":
+        if not HAVE_MAVROS:
+            rospy.logerr("mavros_msgs package not found - please install ros-<distro>-mavros-msgs")
+            return 1
+
         self._rtcm_pub = rospy.Publisher('rtcm', RTCM, queue_size=10)
     elif self.message_type == "rtcm_msgs":
+        if not HAVE_RTCM:
+            rospy.logerr("mavros_msgs package not found - please install ros-<distro>-rtcm-msgs")
+            return 1
+
         self._rtcm_pub = rospy.Publisher('rtcm', Message, queue_size=10)
     else:
         rospy.logerr("[ntrip_client] Does not support message_type %s" % self.message_type)
