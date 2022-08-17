@@ -11,6 +11,10 @@
   <arg name="username"               default = "user" />
   <arg name="password"               default = "pass" />
   <arg name="ntrip_version"          default = "" />
+  <arg name="ssl"                    default = "false" />
+  <arg name="cert"                   default = "" />
+  <arg name="key"                    default = "" />
+  <arg name="ca_cert"                default = "" />
   <arg name="debug"                  default = "false" />
   <arg name="rtcm_message_package"   default = "mavros_msgs" />
 
@@ -37,11 +41,28 @@
     <param name="username" value="$(arg username)" />
     <param name="password" value="$(arg password)" />
 
-    <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages publishe by this node -->
+    <!-- Whether to connect with SSL. cert, key, and ca_cert options will only take effect if this is true -->
+    <param name="ssl" value="$(arg ssl)" />
+
+    <!-- If the NTRIP caster uses cert based authentication, you can specify the cert and keys to use with these options -->
+    <param name="cert" value="$(arg cert)" />
+    <param name="key"  value="$(arg key)" />
+
+    <!-- If the NTRIP caster uses self signed certs, or you need to use a different CA chain, specify the path to the file here -->
+    <param name="ca_cert" value="$(arg ca_cert)" />
+
+    <!-- Not sure if this will be looked at, but this frame ID will be added to the RTCM messages published by this node -->
     <param name="rtcm_frame_id" value="odom" />
 
     <!-- Use this parameter to change the type of RTCM message published by the node. Defaults to "mavros_msgs", but we also support "rtcm_msgs" -->
     <param name="rtcm_message_package" value="$(arg rtcm_message_package)" />
+
+    <!-- Will affect how many times the node will attempt to reconnect before exiting, and how long it will wait in between attempts when a reconnect occurs -->
+    <param name="reconnect_attempt_max" value="10" />
+    <param name="reconnect_attempt_wait_seconds" value="5" />
+
+    <!-- How many seconds is acceptable in between receiving RTCM. If RTCM is not received for this duration, the node will attempt to reconnect -->
+    <param name="rtcm_timeout_seconds" value="4" />
 
     <!-- Uncomment the following section and replace "/gx5/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested -->
     <!--<remap from="/ntrip_client/nmea" to="/gx5/nmea/sentence" />-->
