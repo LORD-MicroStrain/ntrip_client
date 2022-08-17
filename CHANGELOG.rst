@@ -2,6 +2,15 @@
 Changelog for package ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.0 (2022-08-11)
+------------------
+* Adds the ability to configure the NTRIP client to connect using SSL (`#23 <https://github.com/LORD-MicroStrain/ntrip_client/issues/23>`_)
+* ROS automatic reconnect (`#18 <https://github.com/LORD-MicroStrain/ntrip_client/issues/18>`_)
+  * Adds ability to reconnect to ROS
+  * Allows the timeouts and other parameters to be modified via the launch file
+  * Moves optional config out of constructor, and declares constnats in class definition
+* Contributors: Rob
+
 1.1.0 (2022-04-22)
 ------------------
 * ROS Ntrip Version Configuration (`#8 <https://github.com/LORD-MicroStrain/ntrip_client/issues/8>`_)
