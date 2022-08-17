@@ -11,6 +11,7 @@ from std_msgs.msg import Header
 from nmea_msgs.msg import Sentence
 
 from ntrip_client.ntrip_client import NTRIPClient
+from ntrip_client.nmea_parser import NMEA_DEFAULT_MAX_LENGTH, NMEA_DEFAULT_MIN_LENGTH
 
 # Try to import a couple different types of RTCM messages
 _MAVROS_MSGS_NAME = "mavros_msgs"
@@ -49,6 +50,8 @@ class NTRIPRos(Node):
         ('key', 'None'),
         ('ca_cert', 'None'),
         ('rtcm_frame_id', 'odom'),
+        ('nmea_max_length', NMEA_DEFAULT_MAX_LENGTH),
+        ('nmea_min_length', NMEA_DEFAULT_MIN_LENGTH),
         ('rtcm_message_package', _MAVROS_MSGS_NAME),
         ('reconnect_attempt_max', NTRIPClient.DEFAULT_RECONNECT_ATTEMPT_MAX),
         ('reconnect_attempt_wait_seconds', NTRIPClient.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS),
@@ -105,7 +108,6 @@ class NTRIPRos(Node):
     else:
       self.get_logger().fatal('The RTCM package {} is not a valid option. Please choose between the following packages {}'.format(rtcm_message_package, ','.join([_MAVROS_MSGS_NAME, _RTCM_MSGS_NAME])))
 
-
     # Setup the RTCM publisher
     self._rtcm_pub = self.create_publisher(self._rtcm_message_type, 'rtcm', 10)
 
@@ -136,6 +138,8 @@ class NTRIPRos(Node):
       self._client.ca_cert = None
 
     # Get some timeout parameters for the NTRIP client
+    self._client.nmea_parser.nmea_max_length = self.get_parameter('nmea_max_length').value
+    self._client.nmea_parser.nmea_min_length = self.get_parameter('nmea_min_length').value
     self._client.reconnect_attempt_max = self.get_parameter('reconnect_attempt_max').value
     self._client.reconnect_attempt_wait_seconds = self.get_parameter('reconnect_attempt_wait_seconds').value
     self._client.rtcm_timeout_seconds = self.get_parameter('rtcm_timeout_seconds').value

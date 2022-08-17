@@ -61,7 +61,11 @@ def generate_launch_description():
                     'ca_cert': LaunchConfiguration('ca_cert'),
 
                     # Not sure if this will be looked at by other ndoes, but this frame ID will be added to the RTCM messages published by this node
-                    'rtcm_frame_id': 'odom',
+                    'rtcm_frame_id': 'odom'
+
+                    # Optional parameters that will allow for longer or shorter NMEA messages. Standard max length for NMEA is 82
+                    'nmea_max_length': 82,
+                    'nmea_min_length': 3,
 
                     # Use this parameter to change the type of RTCM message published by the node. Defaults to "mavros_msgs", but we also support "rtcm_msgs"
                     'rtcm_message_package': LaunchConfiguration('rtcm_message_package'),
