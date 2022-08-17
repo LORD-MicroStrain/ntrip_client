@@ -7,6 +7,7 @@ import json
 import rospy
 from std_msgs.msg import Header
 from mavros_msgs.msg import RTCM
+from rtcm_msgs.msg import Message
 from nmea_msgs.msg import Sentence
 
 from ntrip_client.ntrip_client import NTRIPClient
@@ -25,6 +26,9 @@ class NTRIPRos:
       rospy.init_node('ntrip_client', anonymous=True, log_level=rospy.DEBUG)
     else:
       rospy.init_node('ntrip_client', anonymous=True)
+
+    self.message_type = rospy.get_param('~message_type', 'mavros_msgs')
+
     host = rospy.get_param('~host', '127.0.0.1')
     port = rospy.get_param('~port', '2101')
     mountpoint = rospy.get_param('~mountpoint', 'mount')
@@ -54,7 +58,13 @@ class NTRIPRos:
 
     # Setup the RTCM publisher
     self._rtcm_timer = None
-    self._rtcm_pub = rospy.Publisher('rtcm', RTCM, queue_size=10)
+    if self.message_type == "mavros_msgs":
+        self._rtcm_pub = rospy.Publisher('rtcm', RTCM, queue_size=10)
+    elif self.message_type == "rtcm_msgs":
+        self._rtcm_pub = rospy.Publisher('rtcm', Message, queue_size=10)
+    else:
+        rospy.logerr("[ntrip_client] Does not support message_type %s" % self.message_type)
+        return 1
 
     # Initialize the client
     self._client = NTRIPClient(
@@ -114,13 +124,24 @@ class NTRIPRos:
 
   def publish_rtcm(self, event):
     for raw_rtcm in self._client.recv_rtcm():
-      self._rtcm_pub.publish(RTCM(
-        header=Header(
-          stamp=rospy.Time.now(),
-          frame_id=self._rtcm_frame_id
-        ),
-        data=raw_rtcm
-      ))
+
+      if self.message_type == "mavros_msgs":
+        rtcm_message = RTCM(
+          header=Header(
+            stamp=rospy.Time.now(),
+            frame_id=self._rtcm_frame_id
+          ),
+          data=raw_rtcm
+        )
+      elif self.message_type == "rtcm_msgs":
+        rtcm_message = Message(
+          header=Header(
+            stamp=rospy.Time.now(),
+            frame_id=self._rtcm_frame_id
+          ),
+          message=raw_rtcm
+        ) 
+      self._rtcm_pub.publish(rtcm_message)
 
 
 if __name__ == '__main__':
