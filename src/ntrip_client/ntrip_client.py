@@ -322,4 +322,3 @@ class NTRIPClient:
       self._logwarn('Exception: {}'.format(e))
       return False
     return True
->>>>>>> a6fbf88294b5a12abe366bd2a43259ec8d8cf274
