@@ -25,9 +25,9 @@ def generate_launch_description():
           # Pass an environment variable to the node
           SetEnvironmentVariable(name='NTRIP_CLIENT_DEBUG', value=LaunchConfiguration('debug')),
 
-          # ****************************************************************** 
+          # ******************************************************************
           # NTRIP Client Node
-          # ****************************************************************** 
+          # ******************************************************************
           Node(
                 name='ntrip_client_node',
                 namespace='ntrip_client',
@@ -61,7 +61,7 @@ def generate_launch_description():
                     'ca_cert': LaunchConfiguration('ca_cert'),
 
                     # Not sure if this will be looked at by other ndoes, but this frame ID will be added to the RTCM messages published by this node
-                    'rtcm_frame_id': 'odom'
+                    'rtcm_frame_id': 'odom',
 
                     # Optional parameters that will allow for longer or shorter NMEA messages. Standard max length for NMEA is 82
                     'nmea_max_length': 82,
