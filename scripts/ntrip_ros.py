@@ -3,6 +3,8 @@
 import os
 import sys
 import json
+import signal
+import traceback
 import importlib.util
 
 import rclpy
@@ -161,10 +163,18 @@ class NTRIPRos(Node):
     if self._rtcm_timer:
       self._rtcm_timer.cancel()
       self._rtcm_timer.destroy()
+      self._rtcm_timer = None
     self.get_logger().info('Disconnecting NTRIP client')
     self._client.disconnect()
     self.get_logger().info('Shutting down node')
     self.destroy_node()
+
+  def signal_handler(self, sig, frame):
+    # Right now, the only signals we handle mean it is time to stop, so shut down the node and exit
+    self.stop()
+
+    # Shutdown the node and stop rclpy
+    rclpy.shutdown()
 
   def subscribe_nmea(self, nmea):
     # Just extract the NMEA from the message, and send it right to the server
@@ -193,21 +203,25 @@ class NTRIPRos(Node):
     )
 
 if __name__ == '__main__':
-  # Start the node
+  # Setup the node
   rclpy.init()
   node = NTRIPRos()
+
+  # Setup a listener for signals, so we will shut down properly
+  signal.signal(signal.SIGINT, lambda sig, frame: node.signal_handler(sig, frame))
+
+  # Start the node
   if not node.run():
     node.stop()
-    sys.exit(1)
-  try:
-    # Spin until we are shut down
-    rclpy.spin(node)
-  except KeyboardInterrupt:
-    pass
-  except BaseException as e:
-    raise e
-  finally:
-    node.stop()
-    
-    # Shutdown the node and stop rclpy
     rclpy.shutdown()
+
+  # Spin until we are shut down
+  try:
+    rclpy.spin(node)
+  except KeyboardInterrupt:  # Keyboard interrupt handled by the signal handler
+    pass
+  except Exception:
+    node.get_logger().error("NTRIP Client encountered unrecoverable error:\n{}".format(traceback.format_exc()))
+    node.stop()
+    rclpy.shutdown()
+    

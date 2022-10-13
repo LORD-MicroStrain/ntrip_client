@@ -174,17 +174,25 @@ class NTRIPClient:
     self._connected = False
     try:
       if self._server_socket:
+        self._logdebug("Shutting down server socket")
         self._server_socket.shutdown(socket.SHUT_RDWR)
+        self._logdebug("Shut down server socket")
       if self._raw_socket:
+        self._logdebug("Shutting down raw socket")
         self._raw_socket.shutdown(socket.SHUT_RDWR)
+        self._logdebug("Shut down raw socket")
     except Exception as e:
       self._logdebug('Encountered exception when shutting down the socket. This can likely be ignored')
       self._logdebug('Exception: {}'.format(e))
     try:
       if self._server_socket:
+        self._logdebug("Closing server socket")
         self._server_socket.close()
+        self._logdebug("Closed server socket")
       if self._raw_socket:
+        self._logdebug("Closing raw socket")
         self._raw_socket.close()
+        self._logdebug("Closed raw socket")
     except Exception as e:
       self._logdebug('Encountered exception when closing the socket. This can likely be ignored')
       self._logdebug('Exception: {}'.format(e))
