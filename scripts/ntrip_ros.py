@@ -197,6 +197,7 @@ if __name__ == '__main__':
   rclpy.init()
   node = NTRIPRos()
   if not node.run():
+    node.stop()
     sys.exit(1)
   try:
     # Spin until we are shut down

@@ -8,9 +8,9 @@ from launch.actions import SetEnvironmentVariable
 def generate_launch_description():
       return LaunchDescription([
           # Declare arguments with default values
-          DeclareLaunchArgument('host',                  default_value='20.185.11.35'),
+          DeclareLaunchArgument('host',                  default_value='localhost'),
           DeclareLaunchArgument('port',                  default_value='2101'),
-          DeclareLaunchArgument('mountpoint',            default_value='VTRI_RTCM3'),
+          DeclareLaunchArgument('mountpoint',            default_value='SC_VRS_RTCM3'),
           DeclareLaunchArgument('ntrip_version',         default_value='None'),
           DeclareLaunchArgument('authenticate',          default_value='True'),
           DeclareLaunchArgument('username',              default_value='user'),
@@ -19,7 +19,7 @@ def generate_launch_description():
           DeclareLaunchArgument('cert',                  default_value='None'),
           DeclareLaunchArgument('key',                   default_value='None'),
           DeclareLaunchArgument('ca_cert',               default_value='None'),
-          DeclareLaunchArgument('debug',                 default_value='false'),
+          DeclareLaunchArgument('debug',                 default_value='true'),
           DeclareLaunchArgument('rtcm_message_package',  default_value='mavros_msgs'),
 
           # Pass an environment variable to the node
@@ -79,8 +79,8 @@ def generate_launch_description():
                   }
                 ],
                 # Uncomment the following section and replace "/gq7/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested
-                #remappings=[
-                #  ("/ntrip_client/nmea", "/gx5/nmea/sentence")
-                #],
+                remappings=[
+                  ("/ntrip_client/nmea", "/nmea/sentence")
+                ],
           )
       ])

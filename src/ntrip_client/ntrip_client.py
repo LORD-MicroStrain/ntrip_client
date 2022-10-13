@@ -82,7 +82,7 @@ class NTRIPClient:
     self._nmea_send_failed_max = 5
     self._read_zero_bytes_count = 0
     self._read_zero_bytes_max = 5
-    self._first_rtcm_received = False
+    self._first_nmea_or_rtcm_received = False
     self._recv_rtcm_last_packet_timestamp = 0
 
     # Public reconnect info
@@ -119,6 +119,7 @@ class NTRIPClient:
 
     # Send the HTTP Request
     try:
+      self._logdebug('Sending HTTP request')
       self._server_socket.send(self._form_request())
     except Exception as e:
       self._logerr(
@@ -129,6 +130,7 @@ class NTRIPClient:
     # Get the response from the server
     response = ''
     try:
+      self._logdebug('Receiving response from server')
       response = self._server_socket.recv(_CHUNK_SIZE).decode('utf-8')
     except Exception as e:
       self._logerr(
@@ -138,6 +140,8 @@ class NTRIPClient:
 
     # Properly handle the response
     if any(success in response for success in _SUCCESS_RESPONSES):
+      self._logdebug('Received valid HTTP response')
+      self._logdebug('Response:\n{}'.format(str(response)))
       self._connected = True
 
     # Some debugging hints about the kind of error we received
@@ -222,7 +226,14 @@ class NTRIPClient:
 
     # Encode the data and send it to the socket
     try:
+      self._logdebug('Sending NMEA sentence {} to server'.format(sentence[:-2]))
       self._server_socket.send(sentence.encode('utf-8'))
+      self._logdebug('Sent NMEA sentence {} to server'.format(sentence[:-2]))
+
+      # If we haven't received RTCM yet, reset the timer, since in some cases, the socket will remain open, and accept NMEA, but never send RTCM, and we want to reset in that case
+      if not self._first_nmea_or_rtcm_received:
+        self._first_nmea_or_rtcm_received = True
+        self._recv_rtcm_last_packet_timestamp = time.time()
     except Exception as e:
       self._logwarn('Unable to send NMEA sentence to server.')
       self._logwarn('Exception: {}'.format(str(e)))
@@ -241,10 +252,10 @@ class NTRIPClient:
       return []
 
     # If it has been too long since we received an RTCM packet, reconnect
-    if time.time() - self.rtcm_timeout_seconds >= self._recv_rtcm_last_packet_timestamp and self._first_rtcm_received:
+    if (time.time() - self.rtcm_timeout_seconds >= self._recv_rtcm_last_packet_timestamp) and self._first_nmea_or_rtcm_received:
       self._logerr('RTCM data not received for {} seconds, reconnecting'.format(self.rtcm_timeout_seconds))
       self.reconnect()
-      self._first_rtcm_received = False
+      self._first_nmea_or_rtcm_received = False
 
     # Check if there is any data available on the socket
     read_sockets, _, _ = select.select([self._server_socket], [], [], 0)
@@ -267,7 +278,7 @@ class NTRIPClient:
           self.reconnect()
           return []
         break
-    self._logdebug('Read {} bytes'.format(len(data)))
+    self._logdebug('Read {} bytes total'.format(len(data)))
 
     # If 0 bytes were read from the socket even though we were told data is available multiple times,
     # it can be safely assumed that we can reconnect as the server has closed the connection
@@ -278,13 +289,17 @@ class NTRIPClient:
         self.reconnect()
         self._read_zero_bytes_count = 0
         return []
-    else:
-      # Looks like we received valid data, so note when the data was received
-      self._recv_rtcm_last_packet_timestamp = time.time()
-      self._first_rtcm_received = True
 
     # Send the data to the RTCM parser to parse it
-    return self.rtcm_parser.parse(data) if data else []
+    parsed_data = self.rtcm_parser.parse(data) if data else []
+    if parsed_data:
+      # Looks like we received valid data, so note when the data was received
+      self._recv_rtcm_last_packet_timestamp = time.time()
+      self._first_nmea_or_rtcm_received = True
+    elif data:
+      self._logdebug('Received data from socket, but the data was not valid RTCM')
+      self._logdebug('  Data: {}'.format(str(data)))
+    return parsed_data
 
   def shutdown(self):
     # Set some state, and then disconnect
