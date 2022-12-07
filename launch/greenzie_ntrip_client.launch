@@ -16,7 +16,7 @@
   <arg name="key"                    default = "" />
   <arg name="ca_cert"                default = "" />
   <arg name="debug"                  default = "false" />
-  <arg name="rtcm_message_package"   default = "mavros_msgs" />
+  <arg name="rtcm_message_package"   default = "uint8_msgs" />
 
   <!-- Set the log level to debug -->
   <env name="NTRIP_CLIENT_DEBUG" value="$(arg debug)" />
@@ -24,7 +24,7 @@
   <!-- ****************************************************************** -->
   <!-- NTRIP Client Node -->
   <!-- ****************************************************************** -->
-  <node name="ntrip_client_node" pkg="ntrip_client" type="ntrip_ros.py" output="screen" ns="ntrip_client">
+  <node name="ntrip_client_node" pkg="ntrip_client" type="ntrip_ros.py" output="screen" ns="ntrip_client" respawn="true">
 
     <!-- Required parameters used to connect to the NTRIP server -->
     <param name="host"       value="$(arg host)" />
