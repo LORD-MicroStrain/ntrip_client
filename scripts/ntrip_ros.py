@@ -6,7 +6,7 @@ import json
 import importlib
 
 import rospy
-from std_msgs.msg import Header
+from std_msgs.msg import Header, UInt8MultiArray, MultiArrayDimension
 from nmea_msgs.msg import Sentence
 
 from ntrip_client.ntrip_client import NTRIPClient
@@ -15,6 +15,7 @@ from ntrip_client.nmea_parser import NMEA_DEFAULT_MAX_LENGTH, NMEA_DEFAULT_MIN_L
 # Try to import a couple different types of RTCM messages
 _MAVROS_MSGS_NAME = "mavros_msgs"
 _RTCM_MSGS_NAME = "rtcm_msgs"
+_UINT8_MSGS_NAME = "uint8_msgs"
 have_mavros_msgs = False
 have_rtcm_msgs = False
 if importlib.util.find_spec(_MAVROS_MSGS_NAME) is not None:
@@ -66,6 +67,7 @@ class NTRIPRos:
 
     # Determine the type of RTCM message that will be published
     rtcm_message_package = rospy.get_param('~rtcm_message_package', _MAVROS_MSGS_NAME)
+    self._output_format = 'packetlist'
     if rtcm_message_package == _MAVROS_MSGS_NAME:
       if have_mavros_msgs:
         self._rtcm_message_type = mavros_msgs_RTCM
@@ -78,6 +80,10 @@ class NTRIPRos:
         self._create_rtcm_message = self._create_rtcm_msgs_rtcm_message
       else:
         rospy.logfatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_message_package))
+    elif rtcm_message_package == _UINT8_MSGS_NAME:
+      self._output_format = 'stream'
+      self._rtcm_message_type = UInt8MultiArray
+      self._create_rtcm_message = self._create_uint8_msgs_rtcm_message
     else:
       rospy.logfatal('The RTCM package {} is not a valid option. Please choose between the following packages {}'.format(rtcm_message_package, str.join([_MAVROS_MSGS_NAME, _RTCM_MSGS_NAME])))
 
@@ -93,6 +99,7 @@ class NTRIPRos:
       ntrip_version=ntrip_version,
       username=username,
       password=password,
+      output_format=self._output_format,
       logerr=rospy.logerr,
       logwarn=rospy.logwarn,
       loginfo=rospy.loginfo,
@@ -144,8 +151,13 @@ class NTRIPRos:
     self._client.send_nmea(nmea.sentence)
 
   def publish_rtcm(self, event):
-    for raw_rtcm in self._client.recv_rtcm():
-      self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
+    if self._output_format == 'stream':
+      raw_rtcm = self._client.recv_rtcm()
+      if len(raw_rtcm) > 0:
+        self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
+    else:
+      for raw_rtcm in self._client.recv_rtcm():
+        self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
 
   def _create_mavros_msgs_rtcm_message(self, rtcm):
     return mavros_msgs_RTCM(
@@ -165,6 +177,16 @@ class NTRIPRos:
       message=rtcm
     )
 
+    
+  def _create_uint8_msgs_rtcm_message(self, rtcm):
+    msg_out = UInt8MultiArray()
+    msg_out.layout.dim.append(MultiArrayDimension())
+    msg_out.layout.dim[0].label = "length"
+    msg_out.layout.dim[0].size = len(rtcm)
+    msg_out.layout.dim[0].stride = len(rtcm)
+    msg_out.data = rtcm
+    
+    return msg_out
 
 if __name__ == '__main__':
   ntrip_ros = NTRIPRos()

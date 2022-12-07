@@ -30,7 +30,7 @@ class NTRIPClient:
   DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS = 5
   DEFAULT_RTCM_TIMEOUT_SECONDS = 4
 
-  def __init__(self, host, port, mountpoint, ntrip_version, username, password, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
+  def __init__(self, host, port, mountpoint, ntrip_version, username, password, output_format='stream', logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
     # Bit of a strange pattern here, but save the log functions so we can be agnostic of ROS
     self._logerr = logerr
     self._logwarn = logwarn
@@ -89,6 +89,9 @@ class NTRIPClient:
     self.reconnect_attempt_max = self.DEFAULT_RECONNECT_ATTEMPT_MAX
     self.reconnect_attempt_wait_seconds = self.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS
     self.rtcm_timeout_seconds = self.DEFAULT_RTCM_TIMEOUT_SECONDS
+
+    # Set output format
+    self._output_format = output_format
 
   def connect(self):
     # Create a socket object that we will use to connect to the server
@@ -283,8 +286,17 @@ class NTRIPClient:
       self._recv_rtcm_last_packet_timestamp = time.time()
       self._first_rtcm_received = True
 
-    # Send the data to the RTCM parser to parse it
-    return self.rtcm_parser.parse(data) if data else []
+    if self._output_format == 'packetlist':
+      # Send the data to the RTCM parser to parse it
+      return self.rtcm_parser.parse(data) if data else []
+
+    elif self._output_format == 'stream':
+      return data
+
+    else:
+      self._logwarn('Unrecognized output format: {}'.format(self._output_format))
+      return []
+
 
   def shutdown(self):
     # Set some state, and then disconnect
@@ -322,3 +334,6 @@ class NTRIPClient:
       self._logwarn('Exception: {}'.format(e))
       return False
     return True
+
+  def set_output_format(self, output_format):
+    self._output_format = output_format
