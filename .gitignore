@@ -4,3 +4,4 @@ __pycache__
 
 # Swap files from vim
 .*.sw*
+.vscode/*
