@@ -1,0 +1,22 @@
+Source: ros-noetic-greenzie-ntrip-client
+Section: misc
+Priority: optional
+Maintainer: Greenzie Developers <developers@greenzie.com>
+Build-Depends: debhelper (>= 9.0.0),
+	ros-noetic-catkin,
+	ros-noetic-mavros-msgs,
+	ros-noetic-nmea-msgs,
+	ros-noetic-rospy,
+	ros-noetic-std-msgs
+Homepage: https://github.com/Greenzie/ntrip_client
+Standards-Version: 3.9.2
+
+Package: ros-noetic-greenzie-ntrip-client
+Architecture: any
+Depends: ${shlibs:Depends},
+	${misc:Depends},
+	ros-noetic-mavros-msgs,
+	ros-noetic-nmea-msgs,
+	ros-noetic-rospy,
+	ros-noetic-std-msgs
+Description: NTRIP client that will publish RTCM corrections to a ROS topic, and optionally subscribe to NMEA messages to send to an NTRIP server
