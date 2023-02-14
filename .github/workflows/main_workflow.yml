@@ -25,7 +25,9 @@ jobs:
   debianize:
     name: "Debianization"
     timeout-minutes: 30
-    runs-on: ubuntu-latest
+    runs-on:
+      - self-hosted
+      - greenzie
     container:
       image: greenzie/debianize:focal-noetic
       credentials:
