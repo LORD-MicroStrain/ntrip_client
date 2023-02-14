@@ -2,9 +2,10 @@
 Changelog for package greenzie_ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.2.2 (2023-01-06)
+1.2.2 (2023-02-14)
 ------------------
 * Adds ability to publish raw RTCM into uint8 multiarray
+* Added respawn to the node
 
 1.2.0 (2022-08-11)
 ------------------
