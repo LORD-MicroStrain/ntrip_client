@@ -1,4 +1,4 @@
-name: Build and Push
+name: Debianization
 on:
   workflow_dispatch:
     inputs:
@@ -11,10 +11,10 @@ on:
           - stable
           - rc
           - experimental
-          - dependency
+          - test
   push:
 concurrency:
-  group: ${{ github.ref }}-build-push
+  group: ${{ github.ref }}-debianization
   cancel-in-progress: true
 defaults:
   run:
@@ -23,25 +23,24 @@ env:
   SERVER_HOSTNAME: aptly.greenzie.com
 jobs:
   debianize:
-    name: Build Debian
-    timeout-minutes: 60
-    runs-on:
-      - self-hosted
-      - greenzie
+    name: "Debianization"
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
     container:
       image: greenzie/debianize:focal-noetic
       credentials:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_TOKEN }}
-      options: --cap-add=ALL
     steps:
       - name: Checkout Codebase
         uses: actions/checkout@v3
         with:
           ref: ${{ github.ref }}
           submodules: false
-      - name: Debianization
-        run: debianize
+      - name: "Changelogs"
+        run: greenzie-release changelog -r "${ROS_DISTRO}"
+      - name: "Debianizing"
+        run: greenzie-debianize all
       - name: Archive Artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -82,6 +81,7 @@ jobs:
             aptly repo deploy --repo rc
           elif [ "${{ github.ref_name }}" == "noetic-devel" ]; then
             aptly repo deploy --repo experimental
+          else
+            aptly repo deploy --repo dependency
           fi
-          
-          aptly repo deploy --repo dependency
+
