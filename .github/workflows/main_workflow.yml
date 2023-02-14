@@ -1,0 +1,89 @@
+name: Debianization
+on:
+  workflow_dispatch:
+    inputs:
+      repository:
+        description: "Aptly server repository"
+        required: true
+        default: "experimental"
+        type: choice
+        options:
+          - stable
+          - rc
+          - experimental
+          - test
+  push:
+concurrency:
+  group: ${{ github.ref }}-debianization
+  cancel-in-progress: true
+defaults:
+  run:
+    shell: bash
+env:
+  SERVER_HOSTNAME: aptly.greenzie.com
+jobs:
+  debianize:
+    name: "Debianization"
+    timeout-minutes: 30
+    runs-on:
+      - self-hosted
+      - greenzie
+    container:
+      image: greenzie/debianize:focal-noetic
+      credentials:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+    steps:
+      - name: Checkout Codebase
+        uses: actions/checkout@v3
+        with:
+          ref: ${{ github.ref }}
+          submodules: false
+      - name: "Changelogs"
+        run: greenzie-release changelog -r "${ROS_DISTRO}"
+      - name: "Debianizing"
+        run: greenzie-debianize all
+      - name: Archive Artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: alldebs-${{ github.run_id }}
+          path: /debians/
+          retention-days: 1
+  deploy:
+    if: ${{ github.ref_name == 'noetic' || github.ref_name == 'noetic-devel' }}
+    name: Aptly Deploy
+    needs:
+      - debianize
+    timeout-minutes: 10
+    runs-on:
+      - self-hosted
+      - greenzie
+    container:
+      image: greenzie/aptly:3.15.5-focal-noetic
+      credentials:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_TOKEN }}
+    steps:
+      - name: Install SSH Key
+        uses: shimataro/ssh-key-action@v2
+        with:
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          known_hosts: ${{ env.SERVER_HOSTNAME }}
+      - name: Download Artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: alldebs-${{ github.run_id }}
+          path: /debians
+      - name: Deploy Debians
+        working-directory: /debians
+        run: |
+          if [ -n "${{ inputs.repository }}" ] && [ "${{ github.ref_name }}" == "noetic" ]; then
+            aptly repo deploy --repo "${{ inputs.repository }}"
+          elif [ "${{ github.ref_name }}" == "noetic" ]; then
+            aptly repo deploy --repo rc
+          elif [ "${{ github.ref_name }}" == "noetic-devel" ]; then
+            aptly repo deploy --repo experimental
+          else
+            aptly repo deploy --repo dependency
+          fi
+
