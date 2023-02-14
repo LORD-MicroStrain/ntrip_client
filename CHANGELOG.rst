@@ -1,6 +1,10 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package ntrip_client
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Changelog for package greenzie_ntrip_client
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+1.2.2 (2023-01-06)
+------------------
+* Adds ability to publish raw RTCM into uint8 multiarray
 
 1.2.0 (2022-08-11)
 ------------------

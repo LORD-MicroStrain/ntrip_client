@@ -5,3 +5,6 @@ __pycache__
 # Swap files from vim
 .*.sw*
 .vscode/*
+**/.templates
+**/.idea
+.obj-x86_64*
