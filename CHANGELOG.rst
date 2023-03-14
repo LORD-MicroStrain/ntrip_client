@@ -2,10 +2,11 @@
 Changelog for package greenzie_ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-1.2.2 (2023-02-14)
+1.2.2 (2023-03-14)
 ------------------
 * Adds ability to publish raw RTCM into uint8 multiarray
 * Added respawn to the node
+* Changed Default NMEA Max Message Length
 
 1.2.0 (2022-08-11)
 ------------------
