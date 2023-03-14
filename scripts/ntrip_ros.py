@@ -93,16 +93,16 @@ class NTRIPRos(Node):
 
     # Determine the type of RTCM message that will be published
     rtcm_message_package = self.get_parameter('rtcm_message_package').value
-    if rtcm_message_package == _MAVROS_MSGS_NAME:
-      if have_mavros_msgs:
-        self._rtcm_message_type = mavros_msgs_RTCM
-        self._create_rtcm_message = self._create_mavros_msgs_rtcm_message
-      else:
-        self.get_logger().fatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_message_package))
-    elif rtcm_message_package == _RTCM_MSGS_NAME:
+    if rtcm_message_package == _RTCM_MSGS_NAME:
       if have_rtcm_msgs:
         self._rtcm_message_type = rtcm_msgs_RTCM
         self._create_rtcm_message = self._create_rtcm_msgs_rtcm_message
+      else:
+        self.get_logger().fatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_message_package))
+    elif rtcm_message_package == _MAVROS_MSGS_NAME:
+      if have_mavros_msgs:
+        self._rtcm_message_type = mavros_msgs_RTCM
+        self._create_rtcm_message = self._create_mavros_msgs_rtcm_message
       else:
         self.get_logger().fatal('The requested RTCM package {} is a valid option, but we were unable to import it. Please make sure you have it installed'.format(rtcm_message_package))
     else:
