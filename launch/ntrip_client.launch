@@ -4,9 +4,12 @@
   <!-- Standalone example launch file for an ntrip client -->
 
   <!-- Declare arguments with default values -->
+  <arg name="namespace"              default = "/" />
+  <arg name="node_name"              default = "ntrip_client" />
+  <arg name="debug"                  default = "false" />
   <arg name="host"                   default = "20.185.11.35" />
   <arg name="port"                   default = "2101" />
-  <arg name="mountpoint"             default = "VTRI_RTCM3" />
+  <arg name="mountpoint"             default = "VTC1_RTCM3" />
   <arg name="authenticate"           default = "true" />
   <arg name="username"               default = "user" />
   <arg name="password"               default = "pass" />
@@ -15,8 +18,7 @@
   <arg name="cert"                   default = "" />
   <arg name="key"                    default = "" />
   <arg name="ca_cert"                default = "" />
-  <arg name="debug"                  default = "false" />
-  <arg name="rtcm_message_package"   default = "mavros_msgs" />
+  <arg name="rtcm_message_package"   default = "rtcm_msgs" />
 
   <!-- Set the log level to debug -->
   <env name="NTRIP_CLIENT_DEBUG" value="$(arg debug)" />
@@ -24,7 +26,7 @@
   <!-- ****************************************************************** -->
   <!-- NTRIP Client Node -->
   <!-- ****************************************************************** -->
-  <node name="ntrip_client_node" pkg="ntrip_client" type="ntrip_ros.py" output="screen" ns="ntrip_client">
+  <node name="$(arg node_name)" pkg="ntrip_client" type="ntrip_ros.py" output="screen" ns="$(arg namespace)">
 
     <!-- Required parameters used to connect to the NTRIP server -->
     <param name="host"       value="$(arg host)" />
