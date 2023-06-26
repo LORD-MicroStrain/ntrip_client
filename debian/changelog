@@ -1,0 +1,43 @@
+ros-noetic-greenzie-ntrip-client (1.2.2-focal.20230314.153719) focal; urgency=medium
+
+  * Adds ability to publish raw RTCM into uint8 multiarray
+  * Added respawn to the node
+
+ -- Greenzie Developers <developers@greenzie.com>  Tue, 14 Feb 2023 05:00:00 -0000
+
+ros-noetic-greenzie-ntrip-client (1.2.0-focal.20230314.153719) focal; urgency=medium
+
+  * Adds the ability to configure the NTRIP client to connect using SSL (#23 <https://github.com/LORD-MicroStrain/ntrip_client/issues/23>)
+  * ROS automatic reconnect (#18 <https://github.com/LORD-MicroStrain/ntrip_client/issues/18>)
+    * Adds ability to reconnect to ROS
+    * Allows the timeouts and other parameters to be modified via the launch file
+    * Moves optional config out of constructor, and declares constnats in class definition
+  * Contributors: Rob
+
+ -- Greenzie Developers <developers@greenzie.com>  Thu, 11 Aug 2022 04:00:00 -0000
+
+ros-noetic-greenzie-ntrip-client (1.1.0-focal.20230314.153719) focal; urgency=medium
+
+  * ROS Ntrip Version Configuration (#8 <https://github.com/LORD-MicroStrain/ntrip_client/issues/8>)
+    * No longer sends Ntrip-Version header if not specified
+    * Adds some hopefully helpful debug logging
+    * Properly handles responses that have both a failure response and success response
+    * Adds ability to print debug logs via launch parameter
+  * Contributors: robbiefish
+
+ -- Greenzie Developers <developers@greenzie.com>  Fri, 22 Apr 2022 04:00:00 -0000
+
+ros-noetic-greenzie-ntrip-client (1.0.1-focal.20230314.153719) focal; urgency=medium
+
+  * Checks if there is a * character in the string before parsing fully
+  * Contributors: robbiefish
+
+ -- Greenzie Developers <developers@greenzie.com>  Thu, 10 Feb 2022 05:00:00 -0000
+
+ros-noetic-greenzie-ntrip-client (1.0.0-focal.20230314.153719) focal; urgency=medium
+
+  * Initial implementation of ROS NTRIP client
+  * Adds ability to cache packets if they do contain some of a mesage but not the whole thing
+  * Contributors: drobb257, nathanmillerparker, robbiefish
+
+ -- Greenzie Developers <developers@greenzie.com>  Wed, 08 Dec 2021 05:00:00 -0000
