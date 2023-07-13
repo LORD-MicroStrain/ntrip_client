@@ -39,6 +39,8 @@ jobs:
           submodules: false
       - name: "Changelogs"
         run: greenzie-release changelog -r "${ROS_DISTRO}"
+      - name: "Remove layout option from setuptools"
+        run: catkin config --cmake-args -DSETUPTOOLS_DEB_LAYOUT=OFF
       - name: "Debianizing"
         run: greenzie-debianize all
       - name: Archive Artifacts
