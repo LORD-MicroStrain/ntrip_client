@@ -35,6 +35,7 @@ override_dh_auto_configure:
 		-DCATKIN_BUILD_BINARY_PACKAGE="1" \
 		-DCMAKE_INSTALL_PREFIX="/opt/ros/noetic" \
 		-DCMAKE_PREFIX_PATH="/opt/ros/noetic" \
+                -DSETUPTOOLS_DEB_LAYOUT=OFF \
 		$(BUILD_TESTING_ARG)
 
 override_dh_auto_build:
