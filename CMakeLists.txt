@@ -28,6 +28,9 @@ catkin_package(
     nmea_msgs
 )
 
+# Required to build
+set(SETUPTOOLS_DEB_LAYOUT "OFF" CACHE STRING "" FORCE)
+
 #############
 ## Install ##
 #############
