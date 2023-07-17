@@ -14,6 +14,8 @@ export DH_VERBOSE=1
 #  https://code.ros.org/trac/ros/ticket/3842
 export LDFLAGS=
 export PKG_CONFIG_PATH=/opt/ros/noetic/lib/pkgconfig
+# added to attempt to fix https://bugs.debian.org/cgi-bin/bugreport.cgi?bug=1003252
+export SETUPTOOLS_USE_DISTUTILS=stdlib
 # Explicitly enable -DNDEBUG, see:
 # 	https://github.com/ros-infrastructure/bloom/issues/327
 export DEB_CXXFLAGS_MAINT_APPEND=-DNDEBUG
@@ -34,8 +36,7 @@ override_dh_auto_configure:
 	dh_auto_configure -- \
 		-DCATKIN_BUILD_BINARY_PACKAGE="1" \
 		-DCMAKE_INSTALL_PREFIX="/opt/ros/noetic" \
-		-DCMAKE_PREFIX_PATH="/opt/ros/noetic" \
-                -DSETUPTOOLS_DEB_LAYOUT=OFF \
+		-DCMAKE_PREFIX_PATH="/opt/ros/noetic"
 		$(BUILD_TESTING_ARG)
 
 override_dh_auto_build:
