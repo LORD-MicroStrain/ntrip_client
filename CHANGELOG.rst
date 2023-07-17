@@ -2,6 +2,10 @@
 Changelog for package greenzie_ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.2.3 (2023-06-26)
+------------------
+* Changed the default NMEA Max Message Length to 84
+
 1.2.2 (2023-03-14)
 ------------------
 * Adds ability to publish raw RTCM into uint8 multiarray

@@ -60,7 +60,10 @@
     <param name="rtcm_frame_id" value="odom" />
 
     <!-- Optional parameters that will allow for longer or shorter NMEA messages. Standard max length for NMEA is 82 -->
-    <param name="nmea_max_length" value="83" />
+    <!-- We have increased the max NMEA length due to using a "High Precision" NMEA message which is largeer than the 
+    standard length. Max length of this extended sentence is currently unknown but has been observed at 84 bytes -->
+    <!-- Standard NMEA = 82 Bytes, High Precision = 84 bytes (?) -->
+    <param name="nmea_max_length" value="84" />
     <param name="nmea_min_length" value="3" />
 
     <!-- Use this parameter to change the type of RTCM message published by the node. Defaults to "mavros_msgs", but we also support "rtcm_msgs" -->
