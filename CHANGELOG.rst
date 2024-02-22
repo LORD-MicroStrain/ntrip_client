@@ -2,6 +2,19 @@
 Changelog for package ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Updates README to mention new launch parameters (`#27 <https://github.com/LORD-MicroStrain/ntrip_client/issues/27>`_)
+* Change codec to ISO-8859-1 (`#46 <https://github.com/LORD-MicroStrain/ntrip_client/issues/46>`_)
+* Prefer rtcm_msgs instead of mavros_msgs (`#37 <https://github.com/LORD-MicroStrain/ntrip_client/issues/37>`_)
+* ROS NMEA sentence min/max length (`#19 <https://github.com/LORD-MicroStrain/ntrip_client/issues/19>`_)
+  * ROS NMEA sentence variable length
+  * Removes unnecesarry imports
+* ROS Adds ability to publish an rtcm_msgs Message instead of a mavros_msgs RTCM (`#22 <https://github.com/LORD-MicroStrain/ntrip_client/issues/22>`_)
+  * Adds ability to publish an rtcm_msgs Message instead of a mavros_msgs RTCM
+  * Renames variables to differentiate between rtcm_msgs package and the conept of an rtcm_message
+* Contributors: Rob
+
 1.2.0 (2022-08-11)
 ------------------
 * Adds the ability to configure the NTRIP client to connect using SSL (`#23 <https://github.com/LORD-MicroStrain/ntrip_client/issues/23>`_)
