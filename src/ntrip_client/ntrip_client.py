@@ -103,7 +103,7 @@ class NTRIPClient:
         'Unable to connect socket to server at http://{}:{}'.format(self._host, self._port))
       self._logerr('Exception: {}'.format(str(e)))
       return False
-    
+
     # If SSL, wrap the socket
     if self.ssl:
       # Configre the context based on the config
@@ -129,7 +129,7 @@ class NTRIPClient:
     # Get the response from the server
     response = ''
     try:
-      response = self._server_socket.recv(_CHUNK_SIZE).decode('utf-8')
+      response = self._server_socket.recv(_CHUNK_SIZE).decode('ISO-8859-1')
     except Exception as e:
       self._logerr(
         'Unable to read response from server at http://{}:{}'.format(self._host, self._port))
@@ -184,7 +184,7 @@ class NTRIPClient:
     except Exception as e:
       self._logdebug('Encountered exception when closing the socket. This can likely be ignored')
       self._logdebug('Exception: {}'.format(e))
-    
+
   def reconnect(self):
     if self._connected:
       while not self._shutdown:
@@ -239,7 +239,7 @@ class NTRIPClient:
       self._logwarn(
         'RTCM requested before client was connected, returning empty list')
       return []
-    
+
     # If it has been too long since we received an RTCM packet, reconnect
     if time.time() - self.rtcm_timeout_seconds >= self._recv_rtcm_last_packet_timestamp and self._first_rtcm_received:
       self._logerr('RTCM data not received for {} seconds, reconnecting'.format(self.rtcm_timeout_seconds))
@@ -303,7 +303,7 @@ class NTRIPClient:
         self._basic_credentials)
     request_str += '\r\n'
     return request_str.encode('utf-8')
-  
+
   def _socket_is_open(self):
     try:
       # this will try to read bytes without blocking and also without removing them from buffer (peek only)
@@ -322,4 +322,3 @@ class NTRIPClient:
       self._logwarn('Exception: {}'.format(e))
       return False
     return True
->>>>>>> a6fbf88294b5a12abe366bd2a43259ec8d8cf274

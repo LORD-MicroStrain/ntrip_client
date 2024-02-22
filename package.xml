@@ -11,7 +11,7 @@
 
   <depend>rclpy</depend>
   <depend>std_msgs</depend>
-  <depend>mavros_msgs</depend>
+  <depend>rtcm_msgs</depend>
   <depend>nmea_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
