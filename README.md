@@ -46,7 +46,7 @@ Optional launch parameters:
 
 This node currently only has two topics of interest:
 
-* **/rtcm**: This node will publish the RTCM corrections received from the server to this topic as [RTCM messages](http://docs.ros.org/en/noetic/api/mavros_msgs/html/msg/RTCM.html). These messages can be consumed by nodes such as the [microstrain_inertial_driver](https://github.com/LORD-MicroStrain/microstrain_inertial)
+* **/rtcm**: This node will publish the RTCM corrections received from the server to this topic as [RTCM messages](https://github.com/tilk/rtcm_msgs/blob/master/msg/Message.msg). These messages can be consumed by nodes such as the [microstrain_inertial_driver](https://github.com/LORD-MicroStrain/microstrain_inertial)
 * **/nmea**: This node will subscribe on this topic and receive [NMEA sentence messages](http://docs.ros.org/en/api/nmea_msgs/html/msg/Sentence.html) which it will forward to the NTRIP server. This is only needed when using a virtual NTRIP server
 
 ## Docker Integration

@@ -7,7 +7,7 @@ project(ntrip_client)
 find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
-  mavros_msgs
+  rtcm_msgs
   nmea_msgs
 )
 
@@ -24,7 +24,7 @@ catkin_package(
   CATKIN_DEPENDS
     rospy
     std_msgs
-    mavros_msgs
+    rtcm_msgs
     nmea_msgs
 )
 
