@@ -2,8 +2,8 @@
 Changelog for package ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+1.3.0 (2024-02-22)
+------------------
 * Updates README to mention new launch parameters (`#27 <https://github.com/LORD-MicroStrain/ntrip_client/issues/27>`_)
 * Change codec to ISO-8859-1 (`#46 <https://github.com/LORD-MicroStrain/ntrip_client/issues/46>`_)
 * Prefer rtcm_msgs instead of mavros_msgs (`#37 <https://github.com/LORD-MicroStrain/ntrip_client/issues/37>`_)
