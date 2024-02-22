@@ -129,7 +129,7 @@ class NTRIPClient:
     # Get the response from the server
     response = ''
     try:
-      response = self._server_socket.recv(_CHUNK_SIZE).decode('utf-8')
+      response = self._server_socket.recv(_CHUNK_SIZE).decode('ISO-8859-1')
     except Exception as e:
       self._logerr(
         'Unable to read response from server at http://{}:{}'.format(self._host, self._port))
