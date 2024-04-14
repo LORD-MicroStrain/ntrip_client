@@ -116,11 +116,6 @@ class NTRIPRos:
     # Setup a shutdown hook
     rospy.on_shutdown(self.stop)
 
-    # Connect the client
-    if not self._client.connect():
-      rospy.logerr('Unable to connect to NTRIP server')
-      return 1
-
     # Setup our subscriber
     self._nmea_sub = rospy.Subscriber('nmea', Sentence, self.subscribe_nmea, queue_size=10)
 
@@ -141,9 +136,19 @@ class NTRIPRos:
 
   def subscribe_nmea(self, nmea):
     # Just extract the NMEA from the message, and send it right to the server
-    self._client.send_nmea(nmea.sentence)
+    if self._client._connected:
+      self._client.send_nmea(nmea.sentence)
 
   def publish_rtcm(self, event):
+    if self._rtcm_pub.get_num_connections()==0:
+      if self._client._connected:
+        self._client.disconnect()
+      return
+    if not self._client._connected:
+      # Connect the client
+      if not self._client.connect():
+        rospy.logerr('Unable to connect to NTRIP server')
+        return
     for raw_rtcm in self._client.recv_rtcm():
       self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
 
