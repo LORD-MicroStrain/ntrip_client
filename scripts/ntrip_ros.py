@@ -3,7 +3,7 @@
 import os
 import sys
 import json
-import importlib
+import sys
 
 import rospy
 from std_msgs.msg import Header
@@ -17,11 +17,34 @@ _MAVROS_MSGS_NAME = "mavros_msgs"
 _RTCM_MSGS_NAME = "rtcm_msgs"
 have_mavros_msgs = False
 have_rtcm_msgs = False
-if importlib.util.find_spec(_MAVROS_MSGS_NAME) is not None:
-  have_mavros_msgs = True
+
+if sys.version_info[0] < 3:
+  # This works for python 2.xx (ROS melodic and backwards)
+  import imp 
+
+  try:
+    imp.find_module(_MAVROS_MSGS_NAME)
+    have_mavros_msgs = True
+  except ImportError:
+    pass
+
+  try:
+    imp.find_module(_RTCM_MSGS_NAME)
+    have_rtcm_msgs = True
+  except ImportError:
+    pass
+else:
+  # This only works for python 3.xx (ROS Noetic and ROS2)
+  import importlib
+  
+  if importlib.util.find_spec(_MAVROS_MSGS_NAME) is not None:
+    have_mavros_msgs = True
+  if importlib.util.find_spec(_RTCM_MSGS_NAME) is not None:
+    have_rtcm_msgs = True
+
+if have_mavros_msgs:
   from mavros_msgs.msg import RTCM as mavros_msgs_RTCM
-if importlib.util.find_spec(_RTCM_MSGS_NAME) is not None:
-  have_rtcm_msgs = True
+if have_rtcm_msgs:
   from rtcm_msgs.msg import Message as rtcm_msgs_RTCM
 
 class NTRIPRos:
