@@ -7,7 +7,7 @@ import importlib.util
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Header
+from std_msgs.msg import Header, String
 from nmea_msgs.msg import Sentence
 
 from ntrip_client.ntrip_client import NTRIPClient
@@ -42,6 +42,7 @@ class NTRIPRos(Node):
         ('port', 2101),
         ('mountpoint', 'mount'),
         ('ntrip_version', 'None'),
+        ('ntrip_server_hz', 10), # set to 1hz for rtk2go
         ('authenticate', False),
         ('username', ''),
         ('password', ''),
@@ -68,6 +69,12 @@ class NTRIPRos(Node):
     ntrip_version = self.get_parameter('ntrip_version').value
     if ntrip_version == 'None':
       ntrip_version = None
+
+    # Set the rate at which RTCM requests and NMEA messages are sent
+    self.rtcm_request_rate = 1.0 / self.get_parameter('ntrip_server_hz').value
+
+    # Initialize variables to store the most recent NMEA message
+    self._latest_nmea = None
 
     # Set the log level to debug if debug is true
     if self._debug:
@@ -111,6 +118,9 @@ class NTRIPRos(Node):
     # Setup the RTCM publisher
     self._rtcm_pub = self.create_publisher(self._rtcm_message_type, 'rtcm', 10)
 
+    # Setup a server frequency confirmation publisher
+    self._rate_confirm_pub = self.create_publisher(String, 'ntrip_server_hz', 10)
+
     # Initialize the client
     self._client = NTRIPClient(
       host=host,
@@ -149,11 +159,13 @@ class NTRIPRos(Node):
     if not self._client.connect():
       self.get_logger().error('Unable to connect to NTRIP server')
       return False
-    # Setup our subscriber
+    
+    # Setup the subscriber for NMEA data
     self._nmea_sub = self.create_subscription(Sentence, 'nmea', self.subscribe_nmea, 10)
 
-    # Start the timer that will check for RTCM data
-    self._rtcm_timer = self.create_timer(0.1, self.publish_rtcm)
+    # Start the timer that will send both RTCM requests and NMEA data at the configured rate
+    self._rtcm_timer = self.create_timer(self.rtcm_request_rate, self.send_rtcm_and_nmea)
+    
     return True
 
   def stop(self):
@@ -167,12 +179,22 @@ class NTRIPRos(Node):
     self.destroy_node()
 
   def subscribe_nmea(self, nmea):
-    # Just extract the NMEA from the message, and send it right to the server
-    self._client.send_nmea(nmea.sentence)
+    # Cache the latest NMEA sentence
+    self._latest_nmea = nmea.sentence
 
-  def publish_rtcm(self):
+  def send_rtcm_and_nmea(self):
+    # Send cached NMEA data if available
+    if self._latest_nmea is not None:
+      self._client.send_nmea(self._latest_nmea)
+
+    # Request and publish RTCM data
     for raw_rtcm in self._client.recv_rtcm():
       self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
+
+    # Publish a confirmation message to indicate the send_rtcm_and_nmea call
+    confirmation_msg = String()
+    confirmation_msg.data = "RTCM request and NMEA receive set at rate: {} Hz".format(1.0 / self.rtcm_request_rate)
+    self._rate_confirm_pub.publish(confirmation_msg)
 
   def _create_mavros_msgs_rtcm_message(self, rtcm):
     return mavros_msgs_RTCM(

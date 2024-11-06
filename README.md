@@ -34,27 +34,37 @@ The following command will launch the node. Keep in mind each instance needs to 
 ros2 launch ntrip_client ntrip_client_launch.py
 ```
 
+-- or override defaults from cmd line --
+
+```bash
+ros2 launch ntrip_client ntrip_client_launch.py host:=rtk2go.com mountpoint:=MyRealMtPt ntrip_server_hz:=1 \ 
+ authenticate:=true username:=myrealemail@provider.com password:=none namespace:=mybot
+```
+
 Optional launch parameters:
+- **namespace**: Prepend this namespace to your node and topic names. Default: /
 - **host**: Hostname or IP address of the NTRIP server to connect to.
 - **port**: Port to connect to on the server. Default: `2101`
 - **mountpoint**: Mountpoint to connect to on the NTRIP server.
 - **ntrip_version**: Value to use for the `Ntrip-Version` header in the initial HTTP request to the caster.
-- **authenticate**: Whether to authenticate with the server, or send an unauthenticated request. If set to true, `username`, and `password` must be supplied.
+- **ntrip_server_hz**: The frequency to communicate with the NTRIP server. Some servers, like rtk2go.com, will ban you if you request data too frequently. For rtk2go, use ntrip_server_hz:=1 Default is 10.
+- **authenticate**: Whether or not to authenticate with the server, or send an unauthenticated request. If set to true, `username`, and `password` must be supplied.
 - **username**: Username to use when authenticating with the NTRIP server. Only used if `authenticate` is true
 - **password**: Password to use when authenticating with the NTRIP server. Only used if `authenticate` is true
 - **ssl**: Whether to connect with SSL. cert, key, and ca_cert options will only take effect if this is true
 - **cert**: If the NTRIP caster is configured to use cert based authentication, you can use this option to specify the client certificate
 - **key**: If the NTRIP caster is configured to use cert based authentication, you can use this option to specify the private key
 - **ca_cert**: If the NTRIP caster uses self signed certs, or you need to use a different CA chain, this option can be used to specify a CA file
-- **rtcm_message_packege**: Changes the type of ROS RTCM message published by this node. Defaults to `mavros_msgs`, but also supports `rtcm_msgs`
+- **rtcm_message_package**: Changes the type of ROS RTCM message published by this node. Defaults to `mavros_msgs`, but also supports `rtcm_msgs`
 
 #### Topics
 
-This node currently only has two topics of interest:
+This node currently only has three topics of interest:
 
 * **/rtcm**: This node will publish the RTCM corrections received from the server to this topic as [RTCM messages](http://docs.ros.org/en/noetic/api/mavros_msgs/html/msg/RTCM.html). These messages can be consumed by nodes such as the [microstrain_inertial_driver](https://github.com/LORD-MicroStrain/microstrain_inertial)
     * **NOTE**: The type of message can be switched between [`mavros_msgs/RTCM`](https://github.com/mavlink/mavros/blob/ros2/mavros_msgs/msg/RTCM.msg) and [`rtcm_msgs/Message`](https://github.com/tilk/rtcm_msgs/blob/master/msg/Message.msg) using the `rtcm_message_package` parameter
-* **/nmea**: This node will subscribe on this topic and receive [NMEA sentence messages](http://docs.ros.org/en/api/nmea_msgs/html/msg/Sentence.html) which it will forward to the NTRIP server. This is only needed when using a virtual NTRIP server
+* **/nmea**: This node will subscribe on this topic and receive [NMEA sentence messages](http://docs.ros.org/en/api/nmea_msgs/html/msg/Sentence.html) which it will forward to the NTRIP server. This is needed when using a virtual NTRIP server or for some NTRIP servers that require it. This message should be produceed by your node talking to the gps receiver.
+* **/ntrip_server_hz**: This node will publish the frequency of communications with the NTRIP server to help check compliance with usage policies. 
 
 ## Docker Integration
 
