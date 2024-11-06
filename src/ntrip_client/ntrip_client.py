@@ -27,8 +27,8 @@ class NTRIPClient:
 
   # Public constants
   DEFAULT_RECONNECT_ATTEMPT_MAX = 10
-  DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS = 5
-  DEFAULT_RTCM_TIMEOUT_SECONDS = 4
+  DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS = 10 #was 5 - changed for rtk2go reqs
+  DEFAULT_RTCM_TIMEOUT_SECONDS = 10 #was 4 - changed for rtk2go reqs
 
   def __init__(self, host, port, mountpoint, ntrip_version, username, password, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
     # Bit of a strange pattern here, but save the log functions so we can be agnostic of ROS
