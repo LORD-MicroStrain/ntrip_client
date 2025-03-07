@@ -52,7 +52,7 @@ class NTRIPBase:
         self.disconnect()
         connect_success = self.connect()
         if not connect_success and self._reconnect_attempt_count < self.reconnect_attempt_max:
-          self._logerr('Reconnect failed. Retrying in {} seconds'.format(self._port, self._baudrate, self.reconnect_attempt_wait_seconds))
+          self._logerr('Reconnect failed. Retrying in {} seconds'.format(self.reconnect_attempt_wait_seconds))
           time.sleep(self.reconnect_attempt_wait_seconds)
         elif self._reconnect_attempt_count >= self.reconnect_attempt_max:
           self._reconnect_attempt_count = 0
