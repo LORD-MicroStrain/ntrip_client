@@ -4,6 +4,7 @@ import os
 import json
 import datetime
 import importlib.util
+from math import isnan
 
 import rclpy
 from rclpy.node import Node
@@ -129,17 +130,21 @@ class NTRIPRosBase(Node):
     millisecond = int(time.microsecond * 1e-4)
     nmea_utc = f"{hour:02}{minute:02}{second:02}.{millisecond:02}"
 
+    # Handle NaN
+    latitude_nan = True if isnan(fix.latitude) else False
+    longitude_nan = True if isnan(fix.longitude) else False
+
     # Figure out the direction of the latitude and longitude
     nmea_lat_direction = "N"
     nmea_lon_direction = "E"
-    if fix.latitude < 0:
+    if latitude_nan is False and fix.latitude < 0:
       nmea_lat_direction = "S"
-    if fix.longitude < 0:
+    if longitude_nan is False and fix.longitude < 0:
       nmea_lon_direction = "W"
     
     # Convert the units of the latitude and longitude
-    nmea_lat = NMEAParser.lat_dd_to_dmm(fix.latitude)
-    nmea_lon = NMEAParser.lon_dd_to_dmm(fix.longitude)
+    nmea_lat = NMEAParser.lat_dd_to_dmm(fix.latitude) if latitude_nan is False else 0
+    nmea_lon = NMEAParser.lon_dd_to_dmm(fix.longitude) if longitude_nan is False else 0
 
     # Convert the GPS quality to the right format for the sentence
     status = fix.status.status
@@ -153,7 +158,12 @@ class NTRIPRosBase(Node):
       nmea_status = 0
 
     # Assemble the sentence
-    nmea_sentence_no_checksum = f"$GPGGA,{nmea_utc},{nmea_lat},{nmea_lat_direction},{nmea_lon},{nmea_lon_direction},{nmea_status},05,1.0,100.0,M,-32.0,M,,0000"
+    nmea_sentence_no_checksum = (
+      f"$GPGGA,{nmea_utc},"
+      + (f"{nmea_lat},{nmea_lat_direction}," if latitude_nan is False else ",,")
+      + (f"{nmea_lon},{nmea_lon_direction}," if longitude_nan is False else ",,")
+      + f"{nmea_status},05,1.0,100.0,M,-32.0,M,,0000"
+    )
     nmea_checksum = NMEAParser.checksum(nmea_sentence_no_checksum)
     nmea_sentence = f"{nmea_sentence_no_checksum}*{nmea_checksum:x}\r\n"
 
