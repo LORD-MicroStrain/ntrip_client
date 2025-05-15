@@ -74,7 +74,7 @@ class NTRIPBase:
         if not initial:
           self.disconnect()
           to_wait = self._compute_reconnect_wait_time()
-          self._logerr(f"Reconnecting in {to_wait} seconds")
+          self._logerr(f"Reconnecting in {to_wait:.1f} seconds")
           time.sleep(self._compute_reconnect_wait_time())
         initial = False
         self._failed_connections += 1
