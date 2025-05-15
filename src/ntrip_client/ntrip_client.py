@@ -53,7 +53,6 @@ class NTRIPClient(NTRIPBase):
     self.ca_cert = None
 
     # Private reconnect info
-    self._reconnect_attempt_count = 0
     self._nmea_send_failed_count = 0
     self._nmea_send_failed_max = 5
     self._read_zero_bytes_count = 0
@@ -235,7 +234,13 @@ class NTRIPClient(NTRIPBase):
       self._first_rtcm_received = True
 
     # Send the data to the RTCM parser to parse it
-    return self.rtcm_parser.parse(data) if data else []
+    parsed_packets = self.rtcm_parser.parse(data) if data else []
+
+    if parsed_packets:
+      # now we've received a packet, we can happily say that we are successfully connected
+      self.mark_successful_connection()
+
+    return parsed_packets
 
   def _form_request(self):
     if self._ntrip_version != None and self._ntrip_version != '':

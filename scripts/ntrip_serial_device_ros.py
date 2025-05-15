@@ -44,6 +44,8 @@ class NTRIPRos(NTRIPRosBase):
     self._client.nmea_parser.nmea_min_length = self._nmea_min_length
     self._client.reconnect_attempt_max = self._reconnect_attempt_max
     self._client.reconnect_attempt_wait_seconds = self._reconnect_attempt_wait_seconds
+    self._client.reconnect_backoff_base = self._reconnect_backoff_base
+    self._client.reconnect_backoff_max_seconds = self._reconnect_backoff_max_seconds
 
 
 if __name__ == '__main__':
