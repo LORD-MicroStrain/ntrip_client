@@ -67,14 +67,16 @@ class NTRIPBase:
       self.reconnect_backoff_max_seconds
     )
 
-  def reconnect(self):
-    if self._connected:
+  def reconnect(self, initial = False):
+    if self._connected or initial:
       while not self._shutdown:
         self._reconnect_attempt_count += 1
-        self.disconnect()
-        to_wait = self._compute_reconnect_wait_time()
-        self._logerr(f"Reconnecting in {to_wait} seconds")
-        time.sleep(self._compute_reconnect_wait_time())
+        if not initial:
+          self.disconnect()
+          to_wait = self._compute_reconnect_wait_time()
+          self._logerr(f"Reconnecting in {to_wait} seconds")
+          time.sleep(self._compute_reconnect_wait_time())
+        initial = False
         self._failed_connections += 1
         connect_success = self.connect()
         if not connect_success and self._reconnect_attempt_count < self.reconnect_attempt_max:
