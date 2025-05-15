@@ -53,7 +53,6 @@ class NTRIPClient(NTRIPBase):
     self.ca_cert = None
 
     # Private reconnect info
-    self._reconnect_attempt_count = 0
     self._nmea_send_failed_count = 0
     self._nmea_send_failed_max = 5
     self._read_zero_bytes_count = 0

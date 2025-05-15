@@ -39,8 +39,7 @@ class NTRIPBase:
     self._connected = False
     # How many connection attempts have failed since we last connected?
     # We don't consider connection successful until some valid data has been received.
-    # TODO merge _reconnect_attempts into this, since it seems to track almost the same
-    self._failed_connections = 0
+    self._reconnect_attempt_count = 0
 
     # Public reconnect info
     self.reconnect_attempt_max = self.DEFAULT_RECONNECT_ATTEMPT_MAX
@@ -63,35 +62,36 @@ class NTRIPBase:
     All of the initial wait times, the maximum and the base are configurable.
     """
     return min(
-      self.reconnect_attempt_wait_seconds * (self.reconnect_backoff_base ** self._failed_connections),
+      self.reconnect_attempt_wait_seconds * (self.reconnect_backoff_base ** self._reconnect_attempt_count ),
       self.reconnect_backoff_max_seconds
     )
 
   def reconnect(self, initial = False):
-    if self._connected or initial:
-      while not self._shutdown:
-        self._reconnect_attempt_count += 1
-        if not initial:
-          self.disconnect()
-          to_wait = self._compute_reconnect_wait_time()
-          self._logerr(f"Reconnecting in {to_wait:.1f} seconds")
-          time.sleep(self._compute_reconnect_wait_time())
-        initial = False
-        self._failed_connections += 1
-        connect_success = self.connect()
-        if not connect_success and self._reconnect_attempt_count < self.reconnect_attempt_max:
-          self._logerr('Reconnect failed')
-        elif self._reconnect_attempt_count >= self.reconnect_attempt_max:
-          self._reconnect_attempt_count = 0
-          raise Exception("Reconnect was attempted {} times, but never succeeded".format(self._reconnect_attempt_count))
-        elif connect_success:
-          self._reconnect_attempt_count = 0
-          break
-    else:
+    if not (self._connected or initial):
       self._logdebug('Reconnect called while not connected, ignoring')
+      return
+
+    while not self._shutdown:
+      if not initial:
+        # If this isn't our initial connection attempt,
+        # disconnect and wait a reconnection interval
+        self.disconnect()
+        to_wait = self._compute_reconnect_wait_time()
+        self._logerr(f"Reconnecting in {to_wait:.1f} seconds")
+        time.sleep(self._compute_reconnect_wait_time()) # TODO should this be ros.sleep ?
+
+      initial = False
+      self._reconnect_attempt_count += 1
+
+      connect_success = self.connect()
+      if connect_success:
+        break
+
+      if self._reconnect_attempt_count >= self.reconnect_attempt_max:
+        raise Exception("Reconnect was attempted {} times, but never succeeded".format(self._reconnect_attempt_count))
 
   def mark_successful_connection(self):
-    self._failed_connections = 0
+    self._reconnect_attempt_count = 0
 
   def send_nmea(self):
     raise NotImplementedError("Must override send_nmea")
