@@ -1,5 +1,5 @@
-import time
 import logging
+import rospy
 
 from .nmea_parser import NMEAParser
 from .rtcm_parser import RTCMParser
@@ -78,7 +78,7 @@ class NTRIPBase:
         self.disconnect()
         to_wait = self._compute_reconnect_wait_time()
         self._logerr(f"Reconnecting in {to_wait:.1f} seconds")
-        time.sleep(self._compute_reconnect_wait_time()) # TODO should this be ros.sleep ?
+        rospy.sleep(self._compute_reconnect_wait_time())
 
       initial = False
       self._reconnect_attempt_count += 1
