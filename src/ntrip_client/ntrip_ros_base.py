@@ -77,6 +77,8 @@ class NTRIPRosBase:
     self._nmea_min_length = rospy.get_param('~nmea_min_length', NMEA_DEFAULT_MIN_LENGTH)
     self._reconnect_attempt_max = rospy.get_param('~reconnect_attempt_max', NTRIPBase.DEFAULT_RECONNECT_ATTEMPT_MAX)
     self._reconnect_attempt_wait_seconds = rospy.get_param('~reconnect_attempt_wait_seconds', NTRIPBase.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS)
+    self._reconnect_backoff_base = rospy.get_param('~reconnect_backoff_base', NTRIPBase.DEFAULT_RECONNECT_BACKOFF_BASE)
+    self._reconnect_backoff_max_seconds = rospy.get_param('~reconnect_backoff_max_seconds', NTRIPBase.DEFAULT_RECONNECT_BACKOFF_MAX_SECONDS)
 
   def run(self):
     # Setup a shutdown hook

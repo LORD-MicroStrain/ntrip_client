@@ -36,6 +36,8 @@
     <!-- Will affect how many times the node will attempt to reconnect before exiting, and how long it will wait in between attempts when a reconnect occurs -->
     <param name="reconnect_attempt_max" value="10" />
     <param name="reconnect_attempt_wait_seconds" value="5" />
+    <param name="reconnect_backoff_base" value="1.8" />
+    <param name="reconnect_backoff_max_seconds" value="300">
 
     <!-- Uncomment the following section and replace "/gx5/nmea/sentence" with the topic you are sending NMEA on if it is not the one we requested -->
     <!--<remap from="/ntrip_client/nmea" to="/gx5/nmea/sentence" />-->
