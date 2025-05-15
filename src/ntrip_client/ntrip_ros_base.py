@@ -95,7 +95,8 @@ class NTRIPRosBase:
     self._rtcm_timer = rospy.Timer(rospy.Duration(0.1), self.publish_rtcm)
 
     # Spin until we are shutdown
-    rospy.spin()
+    while not self._client._shutdown:
+      rospy.sleep(1)
     return 0
 
   def stop(self):
@@ -128,7 +129,7 @@ class NTRIPRosBase:
       nmea_lat_direction = "S"
     if fix.longitude < 0:
       nmea_lon_direction = "W"
-    
+
     # Convert the units of the latitude and longitude
     nmea_lat = NMEAParser.lat_dd_to_dmm(fix.latitude)
     nmea_lon = NMEAParser.lon_dd_to_dmm(fix.longitude)

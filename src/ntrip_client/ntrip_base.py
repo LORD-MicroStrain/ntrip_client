@@ -41,7 +41,7 @@ class NTRIPBase:
 
   def connect(self):
     raise NotImplementedError("Must override connect")
-  
+
   def disconnect(self):
     raise NotImplementedError("Must override disconnect")
 
@@ -56,7 +56,9 @@ class NTRIPBase:
           time.sleep(self.reconnect_attempt_wait_seconds)
         elif self._reconnect_attempt_count >= self.reconnect_attempt_max:
           self._reconnect_attempt_count = 0
-          raise Exception("Reconnect was attempted {} times, but never succeeded".format(self._reconnect_attempt_count))
+          self._logerr('Reconnect failed. Max attempts reached. Shutting down')
+          self.shutdown()
+          break
         elif connect_success:
           self._reconnect_attempt_count = 0
           break
