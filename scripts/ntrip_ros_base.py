@@ -110,8 +110,6 @@ class NTRIPRosBase(Node):
     self._rtcm_timer.cancel()
     self.get_logger().info('Disconnecting NTRIP client')
     self._client.disconnect()
-    self.get_logger().info('Shutting down node')
-    self.destroy_node()
 
   def subscribe_nmea(self, nmea):
     # Just extract the NMEA from the message, and send it right to the server
