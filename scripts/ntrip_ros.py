@@ -3,8 +3,11 @@
 import os
 import sys
 import json
+from typing import List
 
 import rclpy
+from rclpy.parameter import Parameter
+from rcl_interfaces.msg import SetParametersResult
 
 from ntrip_ros_base import NTRIPRosBase
 from ntrip_client.ntrip_client import NTRIPClient
@@ -49,17 +52,18 @@ class NTRIPRos(NTRIPRosBase):
     self.rtcm_timeout_seconds = None
 
     self.load_parameters()
+    self.add_on_set_parameters_callback(self.on_set_parameters_callback)
 
     # Initialize the client
     self._client = self.init_ntrip_client()
     self.run()
 
     # Initialize timer(s)
+    self._ntrip_config_updated = False
     self._disconnected_count = 0
     self.recovery_timer = self.create_timer(
       self.get_parameter('recovery_period_s').value,
       self.recovery_callback)
-
 
   def load_parameters(self):
     """Load ROS parameters."""
@@ -96,6 +100,54 @@ class NTRIPRos(NTRIPRosBase):
 
     self.rtcm_timeout_seconds = self.get_parameter('rtcm_timeout_seconds').value
 
+  def on_set_parameters_callback(self, parameters: List[Parameter]) -> SetParametersResult:
+    """Callback on parameter update
+    This allows to validate every parameter update and automatically
+    reload the necessary component when an update is triggered
+    """
+    def is_string(name: str, param: Parameter) -> bool:
+      """Helper function to reduce verbosity"""
+      return param.name == name and param.type_ == Parameter.Type.STRING
+
+    def is_bool(name: str, param: Parameter) -> bool:
+      """Helper function to reduce verbosity"""
+      return param.name == name and param.type_ == Parameter.Type.BOOL
+
+    def is_integer(name: str, param: Parameter) -> bool:
+      """Helper function to reduce verbosity"""
+      return param.name == name and param.type_ == Parameter.Type.INTEGER
+
+    self.get_logger().warn(f'{parameters}')
+
+    for parameter in parameters:
+      if is_string('host', parameter):
+        self.host = parameter.value
+      elif is_integer('port', parameter):
+        self.port = parameter.value
+      elif is_string('mountpoint', parameter):
+        self.mountpoint = parameter.value
+      elif is_string('username', parameter):
+        self.username = parameter.value
+      elif is_string('password', parameter):
+        self.password = parameter.value
+      elif is_bool('ssl', parameter):
+        self.ssl = parameter.value
+      elif is_string('cert', parameter):
+        self.cert = parameter.value
+        self.cert = self.cert if self.cert != 'None' else None
+      elif is_string('key', parameter):
+        self.key = parameter.value
+        self.key = self.key if self.key != 'None' else None
+      elif is_string('ca_cert', parameter):
+        self.ca_cert = parameter.value
+        self.ca_cert = self.ca_cert if self.ca_cert != 'None' else None
+      else:
+          # parameters unrelated to the NTRIP configuration
+          # such as a timer period
+          pass
+
+    self._ntrip_config_updated = True
+    return SetParametersResult(successful=True)
 
   def init_ntrip_client(self):
     """Initialize a NTRIP client using class internal variable."""
@@ -126,8 +178,19 @@ class NTRIPRos(NTRIPRosBase):
 
   def recovery_callback(self):
     """Perform recovery of the NTRIP client
+    - Check if the configuration was updated through a parameter update
     - Check if the NTRIP client is still connected
     """
+    if self._ntrip_config_updated:
+      self.stop()
+      # Re-initialize ntrip client with updated configuration
+      self._client = self.init_ntrip_client()
+      self.run()
+      self._ntrip_config_updated = False
+
+      #return early, do not check if client is connected immediately
+      return
+
     if not self._client._connected:
       self._disconnected_count += 1
       if self._disconnected_count >= self.get_parameter('max_disconnected_count').value:
