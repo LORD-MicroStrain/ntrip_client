@@ -116,7 +116,7 @@ class NTRIPRosBase(Node):
   def subscribe_nmea(self, nmea):
     # Just extract the NMEA from the message, and send it right to the server
     self._client.send_nmea(nmea.sentence)
-  
+
   def subscribe_fix(self, fix: NavSatFix):
     # Calculate the timestamp of the message
     timestamp_secs = fix.header.stamp.sec + fix.header.stamp.nanosec * 1e-9
@@ -135,7 +135,7 @@ class NTRIPRosBase(Node):
       nmea_lat_direction = "S"
     if fix.longitude < 0:
       nmea_lon_direction = "W"
-    
+
     # Convert the units of the latitude and longitude
     nmea_lat = NMEAParser.lat_dd_to_dmm(fix.latitude)
     nmea_lon = NMEAParser.lon_dd_to_dmm(fix.longitude)

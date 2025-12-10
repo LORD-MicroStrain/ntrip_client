@@ -102,6 +102,6 @@ if __name__ == '__main__':
     raise e
   finally:
     node.stop()
-    
+
     # Shutdown the node and stop rclpy
     rclpy.shutdown()
