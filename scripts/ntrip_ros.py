@@ -31,61 +31,90 @@ class NTRIPRos(NTRIPRosBase):
       ]
     )
 
-    # Read some mandatory config
-    host = self.get_parameter('host').value
-    port = self.get_parameter('port').value
-    mountpoint = self.get_parameter('mountpoint').value
+    # Initialize all internal variables in constructor
+    # Will be loaded in 'load_parameters' function.
+    self.host = None
+    self.port = None
+    self.mountpoint = None
+    self.ntrip_version = None
+    self.authenticate = None
+    self.username = None
+    self.password = None
+    self.ssl = None
+    self.cert = None
+    self.key = None
+    self.ca_cert = None
+    self.rtcm_timeout_seconds = None
 
-    # Optionally get the ntrip version from the launch file
-    ntrip_version = self.get_parameter('ntrip_version').value
-    if ntrip_version == 'None':
-      ntrip_version = None
-
-    # If we were asked to authenticate, read the username and password
-    username = None
-    password = None
-    if self.get_parameter('authenticate').value:
-      username = self.get_parameter('username').value
-      password = self.get_parameter('password').value
-      if not username:
-        self.get_logger().error('Requested to authenticate, but param "username" was not set')
-        sys.exit(1)
-      if not password:
-        self.get_logger().error('Requested to authenticate, but param "password" was not set')
-        sys.exit(1)
+    self.load_parameters()
 
     # Initialize the client
-    self._client = NTRIPClient(
-      host=host,
-      port=port,
-      mountpoint=mountpoint,
-      ntrip_version=ntrip_version,
-      username=username,
-      password=password,
+    self._client = self.init_ntrip_client()
+
+
+  def load_parameters(self):
+    """Load ROS parameters."""
+    # Read some mandatory config
+    self.host = self.get_parameter('host').value
+    self.port = self.get_parameter('port').value
+    self.mountpoint = self.get_parameter('mountpoint').value
+
+    # Optionally get the ntrip version from the launch file
+    self.ntrip_version = self.get_parameter('ntrip_version').value
+    if self.ntrip_version == 'None':
+      self.ntrip_version = None
+
+    # If we were asked to authenticate, read the username and password
+    self.username = None
+    self.password = None
+    self.authenticate = self.get_parameter('authenticate').value
+    if self.authenticate:
+      self.username = self.get_parameter('username').value
+      self.password = self.get_parameter('password').value
+      if not self.username or not self.password:
+        raise ValueError(f'Invalid username/password: {self.username}/{self.password}')
+
+    self.ssl = self.get_parameter('ssl').value
+    self.cert = self.get_parameter('cert').value
+    if self.cert == 'None':
+      self.cert = None
+    self.key = self.get_parameter('key').value
+    if self.key == 'None':
+      self.key = None
+    self.ca_cert = self.get_parameter('ca_cert').value
+    if self.ca_cert == 'None':
+      self.ca_cert = None
+
+    self.rtcm_timeout_seconds = self.get_parameter('rtcm_timeout_seconds').value
+
+
+  def init_ntrip_client(self):
+    """Initialize a NTRIP client using class internal variable."""
+    client = NTRIPClient(
+      host=self.host,
+      port=self.port,
+      mountpoint=self.mountpoint,
+      ntrip_version=self.ntrip_version,
+      username=self.username,
+      password=self.password,
       logerr=self.get_logger().error,
       logwarn=self.get_logger().warning,
       loginfo=self.get_logger().info,
       logdebug=self.get_logger().debug
-    )
+      )
+    client.ssl = self.ssl
+    client.cert = self.cert
+    client.key = self.key
+    client.ca_cert = self.ca_cert
 
-    # Get some SSL parameters for the NTRIP client
-    self._client.ssl = self.get_parameter('ssl').value
-    self._client.cert = self.get_parameter('cert').value
-    self._client.key = self.get_parameter('key').value
-    self._client.ca_cert = self.get_parameter('ca_cert').value
-    if self._client.cert == 'None':
-      self._client.cert = None
-    if self._client.key == 'None':
-      self._client.key = None
-    if self._client.ca_cert == 'None':
-      self._client.ca_cert = None
+    client.nmea_parser.nmea_max_length = self._nmea_max_length
+    client.nmea_parser.nmea_min_length = self._nmea_min_length
+    client.reconnect_attempt_max = self._reconnect_attempt_max
+    client.reconnect_attempt_wait_seconds = self._reconnect_attempt_wait_seconds
+    client.rtcm_timeout_seconds = self.rtcm_timeout_seconds
 
-    # Get some timeout parameters for the NTRIP client
-    self._client.nmea_parser.nmea_max_length = self._nmea_max_length
-    self._client.nmea_parser.nmea_min_length = self._nmea_min_length
-    self._client.reconnect_attempt_max = self._reconnect_attempt_max
-    self._client.reconnect_attempt_wait_seconds = self._reconnect_attempt_wait_seconds
-    self._client.rtcm_timeout_seconds = self.get_parameter('rtcm_timeout_seconds').value
+    return client
+
 
 if __name__ == '__main__':
   # Start the node
