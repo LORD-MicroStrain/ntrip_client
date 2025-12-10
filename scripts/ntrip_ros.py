@@ -50,6 +50,7 @@ class NTRIPRos(NTRIPRosBase):
 
     # Initialize the client
     self._client = self.init_ntrip_client()
+    self.run()
 
 
   def load_parameters(self):
@@ -120,17 +121,11 @@ if __name__ == '__main__':
   # Start the node
   rclpy.init()
   node = NTRIPRos()
-  if not node.run():
-    sys.exit(1)
   try:
     # Spin until we are shut down
     rclpy.spin(node)
   except KeyboardInterrupt:
     pass
-  except BaseException as e:
-    raise e
-  finally:
-    node.stop()
 
-    # Shutdown the node and stop rclpy
-    rclpy.shutdown()
+  # Shutdown the node and stop rclpy
+  rclpy.shutdown()
