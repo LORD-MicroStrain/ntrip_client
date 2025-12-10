@@ -76,6 +76,7 @@ class NTRIPRosBase(Node):
 
     # Setup the RTCM publisher
     self._rtcm_pub = self.create_publisher(self._rtcm_message_type, 'rtcm', 10)
+    self._rtcm_timer = self.create_timer(0.1, self.publish_rtcm, autostart=False)
 
     # Initialize the client
     self._client = NTRIPBase(
@@ -101,14 +102,12 @@ class NTRIPRosBase(Node):
     self._fix_sub = self.create_subscription(NavSatFix, 'fix', self.subscribe_fix, 10)
 
     # Start the timer that will check for RTCM data
-    self._rtcm_timer = self.create_timer(0.1, self.publish_rtcm)
+    self._rtcm_timer.reset()
     return True
 
   def stop(self):
     self.get_logger().info('Stopping RTCM publisher')
-    if self._rtcm_timer:
-      self._rtcm_timer.cancel()
-      self._rtcm_timer.destroy()
+    self._rtcm_timer.cancel()
     self.get_logger().info('Disconnecting NTRIP client')
     self._client.disconnect()
     self.get_logger().info('Shutting down node')
