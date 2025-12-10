@@ -28,6 +28,8 @@ class NTRIPRos(NTRIPRosBase):
         ('key', 'None'),
         ('ca_cert', 'None'),
         ('rtcm_timeout_seconds', NTRIPClient.DEFAULT_RTCM_TIMEOUT_SECONDS),
+        ('recovery_period_s', 5.0),
+        ('max_disconnected_count', 3),
       ]
     )
 
@@ -51,6 +53,12 @@ class NTRIPRos(NTRIPRosBase):
     # Initialize the client
     self._client = self.init_ntrip_client()
     self.run()
+
+    # Initialize timer(s)
+    self._disconnected_count = 0
+    self.recovery_timer = self.create_timer(
+      self.get_parameter('recovery_period_s').value,
+      self.recovery_callback)
 
 
   def load_parameters(self):
@@ -115,6 +123,17 @@ class NTRIPRos(NTRIPRosBase):
     client.rtcm_timeout_seconds = self.rtcm_timeout_seconds
 
     return client
+
+  def recovery_callback(self):
+    """Perform recovery of the NTRIP client
+    - Check if the NTRIP client is still connected
+    """
+    if not self._client._connected:
+      self._disconnected_count += 1
+      if self._disconnected_count >= self.get_parameter('max_disconnected_count').value:
+        self._disconnected_count = 0
+        self.stop()
+        self.run()
 
 
 if __name__ == '__main__':
