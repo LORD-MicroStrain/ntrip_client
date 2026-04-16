@@ -82,10 +82,16 @@ class NTRIPRosBase:
     # Setup a shutdown hook
     rospy.on_shutdown(self.stop)
 
-    # Connect the client
-    if not self._client.connect():
-      rospy.logerr('Unable to connect to NTRIP server')
-      return 1
+    # Retry initial connection indefinitely until wifi/network is available
+    while not rospy.is_shutdown():
+      if self._client.connect():
+        break
+      rospy.logwarn('Unable to connect to NTRIP server, retrying in {} seconds...'.format(
+        self._reconnect_attempt_wait_seconds))
+      rospy.sleep(self._reconnect_attempt_wait_seconds)
+
+    if rospy.is_shutdown():
+      return 0
 
     # Setup our subscriber
     self._nmea_sub = rospy.Subscriber('nmea', Sentence, self.subscribe_nmea, queue_size=10)
