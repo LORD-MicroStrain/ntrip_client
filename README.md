@@ -72,6 +72,27 @@ This node currently only has three topics of interest:
 * **/nmea**: This node will subscribe on this topic and receive [NMEA sentence messages](http://docs.ros.org/en/api/nmea_msgs/html/msg/Sentence.html) which it will forward to the NTRIP server. This is always needed when using a virtual NTRIP server or an NTRIP device
 * **/fix**: This serves the same exact purpose as `/nmea`, but facilitates receiving global position that is not in NMEA format
 
+
+#### Connect to a GNSS "device" via serial
+
+This is a separate node to be launched in parallel with the `ntrip_client` node, and is useful for GNSS devices connected over serial that are expecting an RTCM message, and outputting a NMEA sentence over serial. 
+
+```bash
+ros2 launch ntrip_client serial_gnss_device_launch.py
+```
+
+Optional launch parameters:
+- **port**: Serial port that the GNSS device is connected on
+- **baudrate**: Baudrate to connect the serial port at. Default 115200.
+
+#### Topics
+
+This node currently only has 2 topics of interest:
+
+* **/rtcm**: This node will subscribe one this topic and receive as [RTCM messages](http://docs.ros.org/en/noetic/api/mavros_msgs/html/msg/RTCM.html) which it will write to the GNSS device.
+* **/nmea**: This node will publish the NMEA sentences received via serial from the GNSS device. 
+
+
 ## License
 ntrip_client is released under the MIT License - see the `LICENSE` file in the source distribution.
 

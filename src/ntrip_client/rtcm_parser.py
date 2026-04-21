@@ -38,6 +38,7 @@ _RTCM_CRC_LOOKUP = [
 
 # If we find the beginning of a packet, but not the end, we will cache up to this number of bytes
 _MAX_BUFFER_SIZE = 1024 * 10
+_MAX_PACKET_LEGNTH = 1023
 
 class RTCMParser:
   
@@ -116,3 +117,27 @@ class RTCMParser:
     for byte in packet:
       crc = ((crc << 8) & 0xFFFFFF) ^ _RTCM_CRC_LOOKUP[(crc >> 16) ^ byte]
     return crc
+
+  def is_valid_packet(self, packet):
+    if len(packet) > _MAX_PACKET_LEGNTH:
+      self._logwarn('Received invalid RTCM packet. Max length is {}, but packet was {} bytes'.format(_MAX_PACKET_LEGNTH, len(packet)))
+      return False
+    # Check for RTCM preamble
+    if packet[0] != _RTCM_3_2_PREAMBLE:
+      self._logwarn('Received invalid RTCM packet. First byte should be 0b11010011, but we received 0b{:08b}'.format(packet[0]))
+      self._logwarn('Packet: {}'.format(packet))
+      return False
+    
+    actual_checksum = self._checksum(packet[:-3])
+    expected_checksum = packet[-3] << 16 | packet[-2] << 8 | packet[-1]
+    
+    if actual_checksum != expected_checksum:
+      self._logwarn('Received invalid RTCM packet. Checksum mismatch')    
+      self._logwarn('Expected Checksum: 0x{:X}'.format(expected_checksum))
+      self._logwarn('Calculated Checksum: 0x{:X}'.format(actual_checksum))
+      return False
+    
+    # Passed all checks
+    return True
+
+

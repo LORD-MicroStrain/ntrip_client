@@ -18,6 +18,9 @@ class NMEAParser:
     self.nmea_max_length = NMEA_DEFAULT_MAX_LENGTH
     self.nmea_min_length = NMEA_DEFAULT_MIN_LENGTH
 
+    self._caching_data = False
+    self._buffer = b''
+
   @staticmethod
   def checksum(sentence_no_checksum):
     calculated_checksum = 0
@@ -80,3 +83,44 @@ class NMEAParser:
 
     # Passed all checks
     return True
+    
+  def parse(self, buffer):
+    # Add any data we have cached
+    if self._caching_data:
+      combined_buffer = self._buffer + buffer
+    else:
+      combined_buffer = buffer
+      
+      # Loop over the passed buffer, and parse all available NMEA sentences
+    index = 0
+    nmea_sentences = []
+    while index < len(combined_buffer):
+      # Find the start of the NMEA sentence
+      if combined_buffer[index] == ord('$'):
+        # Check if we have the end of the sentence in the buffer, and if so, try to parse it
+        end_index = combined_buffer.find(b'\r\n', index)
+        if end_index != -1:
+          sentence = combined_buffer[index:end_index + 2].decode('utf-8')
+          if self.is_valid_sentence(sentence):
+            nmea_sentences.append(sentence)
+          else:
+            self._logwarn('Found potential NMEA sentence, but it was invalid. Sentence: {}'.format(sentence))
+          index = end_index + 2
+        else:
+          self._logdebug('Found beginning of NMEA sentence at {}, but there is not enough data in the buffer to find the end of the sentence'.format(index))
+          self._caching_data = True
+          self._buffer = buffer[index:]
+          break
+      index += 1
+
+    # If we didn't find a full sentence, cache this one for next time
+    if self._caching_data:
+      self._buffer += buffer  
+    
+      if len(self._buffer) > self.nmea_max_length:
+        self._logwarn('Too much data buffered, trimming to {} bytes.'.format(self.nmea_max_length))
+        self._buffer = self._buffer[:self.nmea_max_length]
+    
+    # Return the NMEA sentences we found
+    return nmea_sentences 
+    

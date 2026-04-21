@@ -32,6 +32,7 @@ setup(
     scripts=[
       'scripts/ntrip_ros.py',
       'scripts/ntrip_ros_base.py',
-      'scripts/ntrip_serial_device_ros.py'
+      'scripts/ntrip_serial_device_ros.py',
+      'scripts/serial_gnss_device_ros.py'
     ]
 )
