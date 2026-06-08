@@ -1,13 +1,15 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import os
 import sys
 import json
 
 import rclpy
+from std_msgs.msg import String
 
-from ntrip_ros_base import NTRIPRosBase
+from ntrip_ros_base import NTRIPRosBase, _RTCM_MSGS_NAME
 from ntrip_client.ntrip_client import NTRIPClient
+from ntrip_client.nmea_parser import NMEA_DEFAULT_MAX_LENGTH, NMEA_DEFAULT_MIN_LENGTH
 
 class NTRIPRos(NTRIPRosBase):
   def __init__(self):
@@ -20,6 +22,7 @@ class NTRIPRos(NTRIPRosBase):
         ('port', 2101),
         ('mountpoint', 'mount'),
         ('ntrip_version', 'None'),
+        ('user_agent', NTRIPClient.DEFAULT_USER_AGENT),
         ('authenticate', False),
         ('username', ''),
         ('password', ''),
@@ -27,6 +30,7 @@ class NTRIPRos(NTRIPRosBase):
         ('cert', 'None'),
         ('key', 'None'),
         ('ca_cert', 'None'),
+        ('ntrip_server_hz', 1), # set to 1hz for rtk2go, override if needed
         ('rtcm_timeout_seconds', NTRIPClient.DEFAULT_RTCM_TIMEOUT_SECONDS),
       ]
     )
@@ -41,6 +45,22 @@ class NTRIPRos(NTRIPRosBase):
     if ntrip_version == 'None':
       ntrip_version = None
 
+    # User-Agent presented to the caster. rtk2go blocks the stock signature, so this
+    # is configurable; an empty/'None' value falls back to the client default.
+    user_agent = self.get_parameter('user_agent').value
+    if not user_agent or user_agent == 'None':
+      user_agent = NTRIPClient.DEFAULT_USER_AGENT
+
+    # Set the rate at which RTCM requests and NMEA messages are sent
+    self.rtcm_request_rate = 1.0 / self.get_parameter('ntrip_server_hz').value
+
+    # Initialize variables to store the most recent NMEA message
+    self._latest_nmea = None
+
+    # Set the log level to debug if debug is true
+    if self._debug:
+      rclpy.logging.set_logger_level(self.get_logger().name, rclpy.logging.LoggingSeverity.DEBUG)
+
     # If we were asked to authenticate, read the username and password
     username = None
     password = None
@@ -53,6 +73,9 @@ class NTRIPRos(NTRIPRosBase):
       if not password:
         self.get_logger().error('Requested to authenticate, but param "password" was not set')
         sys.exit(1)
+
+    # Setup a server frequency confirmation publisher
+    self._rate_confirm_pub = self.create_publisher(String, 'ntrip_server_hz', 10)
 
     # Initialize the client
     self._client = NTRIPClient(
@@ -91,7 +114,7 @@ if __name__ == '__main__':
   # Start the node
   rclpy.init()
   node = NTRIPRos()
-  if not node.run():
+  if not node.run(node.rtcm_request_rate):
     sys.exit(1)
   try:
     # Spin until we are shut down
