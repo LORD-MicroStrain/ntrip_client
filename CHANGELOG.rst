@@ -2,6 +2,15 @@
 Changelog for package ntrip_client
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+1.5.0 (2026-06-08)
+------------------
+* Fixes to make rtk2go work: configurable and lower default rate (1 Hz) for querying caster
+* Support persistent reconnect attempts to cope with extended caster outages
+* Change the user agent name to one that's not blocked by rtk2go
+* Allow setting the default user agent name
+* Python3 support
+* Change NMEA_DEFAULT_MAX_LENGTH to 150 per ponderbotics
+
 1.4.1 (2025-04-15)
 ------------------
 * Fix log message (`#61 <https://github.com/LORD-MicroStrain/ntrip_client/issues/61>`_)

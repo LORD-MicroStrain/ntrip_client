@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import ssl
 import time
@@ -25,9 +25,17 @@ _UNAUTHORIZED_RESPONSES = [
 class NTRIPClient(NTRIPBase):
 
   # Public constants
-  DEFAULT_RTCM_TIMEOUT_SECONDS = 4
+  DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS = 5
+  DEFAULT_RECONNECT_ATTEMPT_WAIT_MAX_SECONDS = 120
+  DEFAULT_RTCM_TIMEOUT_SECONDS = 10
 
-  def __init__(self, host, port, mountpoint, ntrip_version, username, password, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
+  # Default User-Agent. NOTE: rtk2go.com (SNIP) blocks the stock LORD Microstrain
+  # signature 'NTRIP ntrip_client_ros' and refuses such clients by returning the
+  # sourcetable instead of the stream. Per NTRIP it must begin with 'NTRIP '. Use a
+  # unique string that identifies this robot so we don't share a blocked signature.
+  DEFAULT_USER_AGENT = 'NTRIP ros_ntrip_client'
+
+  def __init__(self, host, port, mountpoint, ntrip_version, username, password, user_agent=DEFAULT_USER_AGENT, logerr=logging.error, logwarn=logging.warning, loginfo=logging.info, logdebug=logging.debug):
     # Call the parent constructor
     super().__init__(logerr, logwarn, loginfo, logdebug)
 
@@ -36,6 +44,7 @@ class NTRIPClient(NTRIPBase):
     self._port = port
     self._mountpoint = mountpoint
     self._ntrip_version = ntrip_version
+    self._user_agent = user_agent if user_agent else self.DEFAULT_USER_AGENT
     if username is not None and password is not None:
       self._basic_credentials = base64.b64encode('{}:{}'.format(
         username, password).encode('utf-8')).decode('utf-8')
@@ -52,6 +61,10 @@ class NTRIPClient(NTRIPBase):
     self.key = None
     self.ca_cert = None
 
+    # Setup some state
+    self._shutdown = False
+    self._connected = False
+
     # Private reconnect info
     self._reconnect_attempt_count = 0
     self._nmea_send_failed_count = 0
@@ -61,7 +74,14 @@ class NTRIPClient(NTRIPBase):
     self._first_rtcm_received = False
     self._recv_rtcm_last_packet_timestamp = 0
 
+    # Reconnect scheduling (non-blocking)
+    self._reconnect_pending = False
+    self._reconnect_next_time = 0
+    self._current_backoff = 0
+
     # Public reconnect info
+    self.reconnect_attempt_wait_seconds = self.DEFAULT_RECONNECT_ATEMPT_WAIT_SECONDS
+    self.reconnect_attempt_wait_max_seconds = self.DEFAULT_RECONNECT_ATTEMPT_WAIT_MAX_SECONDS
     self.rtcm_timeout_seconds = self.DEFAULT_RTCM_TIMEOUT_SECONDS
 
   def connect(self):
@@ -114,12 +134,13 @@ class NTRIPClient(NTRIPBase):
     # Some debugging hints about the kind of error we received
     known_error = False
     if any(sourcetable in response for sourcetable in _SOURCETABLE_RESPONSES):
-      self._logwarn('Received sourcetable response from the server. This probably means the mountpoint specified is not valid')
+      self._logwarn('Received sourcetable response from the server instead of the stream. This means the caster refused the stream request: either the mountpoint is not valid, or the caster is blocking this client (rtk2go blocks the stock "NTRIP ntrip_client_ros" User-Agent). Current User-Agent: {}'.format(self._user_agent))
       known_error = True
     elif any(unauthorized in response for unauthorized in _UNAUTHORIZED_RESPONSES):
       self._logwarn('Received unauthorized response from the server. Check your username, password, and mountpoint to make sure they are correct.')
       known_error = True
-    elif not self._connected and (self._ntrip_version == None or self._ntrip_version == ''):
+    elif not self._connected:  # and (self._ntrip_version == None or self._ntrip_version == ''):
+      self._logwarn(response)
       self._logwarn('Received unknown error from the server. Note that the NTRIP version was not specified in the launch file. This is not necesarilly the cause of this error, but it may be worth checking your NTRIP casters documentation to see if the NTRIP version needs to be specified.')
       known_error = True
 
@@ -146,7 +167,7 @@ class NTRIPClient(NTRIPBase):
         self._raw_socket.shutdown(socket.SHUT_RDWR)
     except Exception as e:
       self._logdebug('Encountered exception when shutting down the socket. This can likely be ignored')
-      self._logdebug('Exception: {}'.format(str(e)))
+      self._logdebug('Exception: {}'.format(e))
     try:
       if self._server_socket:
         self._server_socket.close()
@@ -154,7 +175,47 @@ class NTRIPClient(NTRIPBase):
         self._raw_socket.close()
     except Exception as e:
       self._logdebug('Encountered exception when closing the socket. This can likely be ignored')
-      self._logdebug('Exception: {}'.format(str(e)))
+      self._logdebug('Exception: {}'.format(e))
+
+  def request_reconnect(self, reason='Connection lost'):
+    """Schedule a non-blocking reconnect. The actual attempt happens in try_reconnect()."""
+    if self._reconnect_pending:
+      return
+    self.disconnect()
+    self._reconnect_pending = True
+    self._reconnect_attempt_count = 0
+    self._current_backoff = self.reconnect_attempt_wait_seconds
+    self._reconnect_next_time = time.time() + self._current_backoff
+    self._logwarn('{}. Will retry in {} seconds'.format(reason, self._current_backoff))
+
+  def try_reconnect(self):
+    """Attempt one reconnect if the backoff timer has elapsed. Returns True if connected."""
+    if not self._reconnect_pending:
+      return self._connected
+
+    now = time.time()
+    if now < self._reconnect_next_time:
+      return False
+
+    self._reconnect_attempt_count += 1
+    connect_success = self.connect()
+    if connect_success:
+      self._loginfo('Reconnected after {} attempts'.format(self._reconnect_attempt_count))
+      self._reconnect_pending = False
+      self._reconnect_attempt_count = 0
+      self._first_rtcm_received = False
+      return True
+
+    # Exponential backoff: double the wait, capped at max
+    self._current_backoff = min(self._current_backoff * 2, self.reconnect_attempt_wait_max_seconds)
+    self._reconnect_next_time = now + self._current_backoff
+    self._logerr('Reconnect attempt {} to http://{}:{} failed. Retrying in {} seconds'.format(
+      self._reconnect_attempt_count, self._host, self._port, self._current_backoff))
+    return False
+
+  @property
+  def reconnecting(self):
+    return self._reconnect_pending
 
   def send_nmea(self, sentence):
     if not self._connected:
@@ -180,22 +241,36 @@ class NTRIPClient(NTRIPBase):
       self._logwarn('Exception: {}'.format(str(e)))
       self._nmea_send_failed_count += 1
       if self._nmea_send_failed_count >= self._nmea_send_failed_max:
-        self._logwarn("NMEA sentence failed to send to server {} times, restarting".format(self._nmea_send_failed_count))
-        self.reconnect()
+        self._logwarn("NMEA sentence failed to send to server {} times, reconnecting".format(self._nmea_send_failed_count))
+        self.request_reconnect()
         self._nmea_send_failed_count = 0
-        self.send_nmea(sentence)  # Try sending the NMEA sentence again
 
 
   def recv_rtcm(self):
+    # If a reconnect is in progress, try it and return empty until connected
+    if self._reconnect_pending:
+      self.try_reconnect()
+      return []
+
     if not self._connected:
       self._logwarn('RTCM requested before client was connected, returning empty list')
       return []
 
-    # If it has been too long since we received an RTCM packet, reconnect
+    # If it has been too long since we received an RTCM packet, reconnect.
+    # KNOWN LIMITATION: this watchdog only arms after the first RTCM packet ever
+    # arrives (_first_rtcm_received). If the caster accepts the connection
+    # (_connected=True) but never delivers any RTCM -- e.g. a mountpoint that is
+    # down for maintenance while the caster still completes the GET -- this never
+    # fires, the node believes it is connected, and (when send_nmea is true) keeps
+    # uploading NMEA every cycle to a dead stream. On rtk2go that can earn a ban.
+    # For fixed-base mountpoints the correct fix is send_nmea:=false (no NMEA at
+    # all). VRS mountpoints require NMEA and would need this watchdog to instead
+    # baseline off the connect time; left as documented behavior pending a VRS to
+    # test against. See ntrip_client README "rtk2go and reconnect behavior".
     if time.time() - self.rtcm_timeout_seconds >= self._recv_rtcm_last_packet_timestamp and self._first_rtcm_received:
       self._logerr('RTCM data not received for {} seconds, reconnecting'.format(self.rtcm_timeout_seconds))
-      self.reconnect()
-      self._first_rtcm_received = False
+      self.request_reconnect()
+      return []
 
     # Check if there is any data available on the socket
     read_sockets, _, _ = select.select([self._server_socket], [], [], 0)
@@ -215,7 +290,7 @@ class NTRIPClient(NTRIPBase):
         self._logerr('Error while reading {} bytes from socket'.format(_CHUNK_SIZE))
         if not self._socket_is_open():
           self._logerr('Socket appears to be closed. Reconnecting')
-          self.reconnect()
+          self.request_reconnect()
           return []
         break
     self._logdebug('Read {} bytes'.format(len(data)))
@@ -226,7 +301,7 @@ class NTRIPClient(NTRIPBase):
       self._read_zero_bytes_count += 1
       if self._read_zero_bytes_count >= self._read_zero_bytes_max:
         self._logwarn('Reconnecting because we received 0 bytes from the socket even though it said there was data available {} times'.format(self._read_zero_bytes_count))
-        self.reconnect()
+        self.request_reconnect()
         self._read_zero_bytes_count = 0
         return []
     else:
@@ -237,13 +312,18 @@ class NTRIPClient(NTRIPBase):
     # Send the data to the RTCM parser to parse it
     return self.rtcm_parser.parse(data) if data else []
 
+  def shutdown(self):
+    # Set some state, and then disconnect
+    self._shutdown = True
+    self.disconnect()
+
   def _form_request(self):
     if self._ntrip_version != None and self._ntrip_version != '':
-      request_str = 'GET /{} HTTP/1.0\r\nNtrip-Version: {}\r\nUser-Agent: NTRIP ntrip_client_ros\r\n'.format(
-        self._mountpoint, self._ntrip_version)
+      request_str = 'GET /{} HTTP/1.0\r\nNtrip-Version: {}\r\nUser-Agent: {}\r\n'.format(
+        self._mountpoint, self._ntrip_version, self._user_agent)
     else:
-      request_str = 'GET /{} HTTP/1.0\r\nUser-Agent: NTRIP ntrip_client_ros\r\n'.format(
-        self._mountpoint)
+      request_str = 'GET /{} HTTP/1.0\r\nUser-Agent: {}\r\n'.format(
+        self._mountpoint, self._user_agent)
     if self._basic_credentials is not None:
       request_str += 'Authorization: Basic {}\r\n'.format(
         self._basic_credentials)
