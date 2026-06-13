@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import os
 import json
@@ -7,7 +7,7 @@ import importlib.util
 
 import rclpy
 from rclpy.node import Node
-from std_msgs.msg import Header, String
+from std_msgs.msg import Header
 from nmea_msgs.msg import Sentence
 from sensor_msgs.msg import NavSatFix
 from sensor_msgs.msg import NavSatStatus
@@ -91,18 +91,17 @@ class NTRIPRosBase(Node):
     self._reconnect_attempt_max = self.get_parameter('reconnect_attempt_max').value
     self._reconnect_attempt_wait_seconds = self.get_parameter('reconnect_attempt_wait_seconds').value
 
-  def run(self, rtcm_request_rate):
+  def run(self):
     # Connect the client
     if not self._client.connect():
-      self.get_logger().warning('Initial connection to NTRIP server failed, will retry with backoff')
-      self._client.request_reconnect(reason='Initial connection failed')
-
+      self.get_logger().error('Unable to connect')
+      return False
     # Setup our subscribers
     self._nmea_sub = self.create_subscription(Sentence, 'nmea', self.subscribe_nmea, 10)
     self._fix_sub = self.create_subscription(NavSatFix, 'fix', self.subscribe_fix, 10)
 
     # Start the timer that will check for RTCM data
-    self._rtcm_timer = self.create_timer(rtcm_request_rate, self.publish_rtcm_and_nmea)
+    self._rtcm_timer = self.create_timer(0.1, self.publish_rtcm)
     return True
 
   def stop(self):
@@ -116,8 +115,8 @@ class NTRIPRosBase(Node):
     self.destroy_node()
 
   def subscribe_nmea(self, nmea):
-    # Cache the latest NMEA sentence
-    self._latest_nmea = nmea.sentence
+    # Just extract the NMEA from the message, and send it right to the server
+    self._client.send_nmea(nmea.sentence)
   
   def subscribe_fix(self, fix: NavSatFix):
     # Calculate the timestamp of the message
@@ -161,18 +160,9 @@ class NTRIPRosBase(Node):
     # Send the sentence to the client
     self._client.send_nmea(nmea_sentence)
 
-  def publish_rtcm_and_nmea(self):
+  def publish_rtcm(self):
     for raw_rtcm in self._client.recv_rtcm():
       self._rtcm_pub.publish(self._create_rtcm_message(raw_rtcm))
-
-    # Send cached NMEA data if connected (skip during reconnect to avoid log spam)
-    if self._latest_nmea is not None and not self._client.reconnecting:
-      self._client.send_nmea(self._latest_nmea)
-
-    # Publish a confirmation message to indicate the send_rtcm_and_nmea call
-    confirmation_msg = String()
-    confirmation_msg.data = "RTCM and NMEA sent at rate: {} Hz".format(1.0 / self.rtcm_request_rate)
-    self._rate_confirm_pub.publish(confirmation_msg)
 
   def _create_mavros_msgs_rtcm_message(self, rtcm):
     return mavros_msgs_RTCM(

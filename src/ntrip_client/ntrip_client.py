@@ -244,7 +244,6 @@ class NTRIPClient(NTRIPBase):
         self._logwarn("NMEA sentence failed to send to server {} times, reconnecting".format(self._nmea_send_failed_count))
         self.request_reconnect()
         self._nmea_send_failed_count = 0
-        self.send_nmea(sentence)  # Try sending the NMEA sentence again
 
 
   def recv_rtcm(self):
@@ -257,7 +256,17 @@ class NTRIPClient(NTRIPBase):
       self._logwarn('RTCM requested before client was connected, returning empty list')
       return []
 
-    # If it has been too long since we received an RTCM packet, reconnect
+    # If it has been too long since we received an RTCM packet, reconnect.
+    # KNOWN LIMITATION: this watchdog only arms after the first RTCM packet ever
+    # arrives (_first_rtcm_received). If the caster accepts the connection
+    # (_connected=True) but never delivers any RTCM -- e.g. a mountpoint that is
+    # down for maintenance while the caster still completes the GET -- this never
+    # fires, the node believes it is connected, and (when send_nmea is true) keeps
+    # uploading NMEA every cycle to a dead stream. On rtk2go that can earn a ban.
+    # For fixed-base mountpoints the correct fix is send_nmea:=false (no NMEA at
+    # all). VRS mountpoints require NMEA and would need this watchdog to instead
+    # baseline off the connect time; left as documented behavior pending a VRS to
+    # test against. See ntrip_client README "rtk2go and reconnect behavior".
     if time.time() - self.rtcm_timeout_seconds >= self._recv_rtcm_last_packet_timestamp and self._first_rtcm_received:
       self._logerr('RTCM data not received for {} seconds, reconnecting'.format(self.rtcm_timeout_seconds))
       self.request_reconnect()

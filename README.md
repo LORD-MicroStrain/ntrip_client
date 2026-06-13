@@ -2,15 +2,15 @@
 
 ## Description
 
-ROS node that will communicate with an NTRIP server to receive RTCM corrections and publish them on a ROS topic. Also works with virtual/relayed NTRIP servers by subscribing to NMEA
+ROS node that will communicate with an NTRIP caster to receive RTCM corrections and publish them on a ROS topic. Also works with virtual/relayed NTRIP servers by subscribing to NMEA
 messages and sending them to the NTRIP server.
 
 ## Build Instructions
 
-It is assumed you have already installed ROS.
+It is assumed you have already installed ROS2. This package is not tied to any particular release of ROS2.
 Build this package from source as follows:
 
-1. Clone this repo into the your_workspace/src directory.
+1. Clone this repo into the your_workspace/src directory and check out the ros2 branch.
 
 2. Install rosdeps for this package: `rosdep install --from-paths ~/your_workspace/src --ignore-src -r -y`
 
@@ -33,7 +33,7 @@ ros2 launch ntrip_client ntrip_client_launch.py
 -- or override defaults from cmd line (example for rtk2go) --
 
 ```bash
-ros2 launch ntrip_client ntrip_client_launch.py host:=rtk2go.com mountpoint:=MyRealMtPt ntrip_server_hz:=1 authenticate:=true username:=myrealemail@provider.com password:=none
+ros2 launch ntrip_client ntrip_client_launch.py host:=rtk2go.com mountpoint:=MyRealMtPt authenticate:=true username:=myrealemail@provider.com password:=none send_nmea:=false
 ```
 
 Launch arguments (all overridable as `name:=value`; defaults shown):
@@ -44,6 +44,7 @@ Connection:
 - **mountpoint**: Mountpoint to connect to on the NTRIP server
 - **ntrip_version**: Value sent in the `Ntrip-Version` request header. Default: `None` (header omitted; NTRIP rev1/ICY request)
 - **user_agent**: HTTP `User-Agent` sent to the caster. **Must start with `NTRIP `.** Default: `NTRIP ponderbotics_ntrip_client`. Do not use the stock `NTRIP ntrip_client_ros` — rtk2go blocks it (see [rtk2go notes](#rtk2go-and-reconnect-behavior)).
+- **send_nmea**: Whether to forward NMEA from the `nmea` topic up to the caster. Needed for virtual/relayed (VRS) mountpoints. For a plain base station (e.g. rtk2go's fixed mountpoints) set `send_nmea:=false` — the node then skips the `nmea` subscription entirely and never uploads your position. Default: `true`.
 
 Authentication:
 - **authenticate**: Whether to authenticate with the server, or send an unauthenticated request. If `true`, `username` and `password` must be supplied.
@@ -81,18 +82,27 @@ Optional launch parameters:
 
 * **/rtcm** (publish): RTCM corrections received from the server. Message type depends on `rtcm_message_package` — `rtcm_msgs/msg/Message` by default, or `mavros_msgs/msg/RTCM`. Consumed by GNSS drivers (e.g. ublox_gps, [microstrain_inertial_driver](https://github.com/LORD-MicroStrain/microstrain_inertial)).
     * **NOTE**: The type of message can be switched between [`mavros_msgs/RTCM`](https://github.com/mavlink/mavros/blob/ros2/mavros_msgs/msg/RTCM.msg) and [`rtcm_msgs/Message`](https://github.com/tilk/rtcm_msgs/blob/master/msg/Message.msg) using the `rtcm_message_package` parameter
-* **/nmea** (subscribe): [NMEA sentence messages](http://docs.ros.org/en/api/nmea_msgs/html/msg/Sentence.html) forwarded to the NTRIP server. Needed for virtual/relayed (VRS) mountpoints. The node subscribes to the topic `/nmea`; remap it (e.g. in the launch file's `remappings`) to your NMEA source if it differs. Note: there is no `nmea_topic` launch argument — passing one has no effect.
-* **/fix**: This serves the same exact purpose as `/nmea`, but facilitates receiving global position that is not in NMEA format
+* **/nmea** (subscribe): [NMEA sentence messages](http://docs.ros.org/en/api/nmea_msgs/html/msg/Sentence.html) forwarded to the NTRIP server. Needed for virtual/relayed (VRS) mountpoints. The node subscribes to the topic `/nmea`; remap it (e.g. in the launch file's `remappings`) to your NMEA source if it differs. Set `send_nmea:=false` to disable forwarding entirely (the subscription is then not created). Note: there is no `nmea_topic` launch argument — passing one has no effect.
+* **/fix**: This serves the same exact purpose as `/nmea`, but facilitates receiving global position that is not in NMEA format by monitoring NavSatFix mesages on the /fix topic.
 * **/ntrip_server_hz** (publish): A `std_msgs/String` confirmation published each communication cycle, to help verify compliance with caster usage policies.
 
 ## rtk2go and reconnect behavior
 
-[rtk2go.com](http://rtk2go.com) runs the SNIP caster software and enforces usage policies that this fork is tuned for:
+[rtk2go.com](http://rtk2go.com) runs the SNIP caster software and enforces usage policies that this release complies with:
 
-* **User-Agent blocking.** rtk2go maintains a block list of client signatures. The stock LORD-MicroStrain `User-Agent: NTRIP ntrip_client_ros` is blocked. A blocked client does **not** get a clear error — the caster returns a `SOURCETABLE 200 OK` response instead of the data stream, which the node logs as a sourcetable/invalid-response error. If you see a sourcetable response for a mountpoint you know is valid, suspect a client-side block, not a bad mountpoint. The default `user_agent` (`NTRIP ponderbotics_ntrip_client`) is accepted; if you change it, keep the mandatory `NTRIP ` prefix and avoid the stock string.
-* **Request rate.** Use `ntrip_server_hz:=1` for rtk2go. Higher rates can get you banned.
-* **Persistent reconnect.** On any connection loss or failed initial connect, the node schedules a non-blocking reconnect and retries indefinitely. The wait starts at `reconnect_attempt_wait_seconds` (10s) and doubles on each failure up to `reconnect_attempt_wait_max_seconds` (default 120s), then holds at that ceiling. It never gives up, so the node recovers on its own from extended rtk2go outages (DDoS) or a mountpoint taken down for maintenance. To shrink your footprint during long outages, raise the ceiling (e.g. `reconnect_attempt_wait_max_seconds:=600`).
+* **User-Agent blocking.** rtk2go maintains a block list of client signatures. The stock LORD-MicroStrain `User-Agent: NTRIP ntrip_client_ros` is blocked. A blocked client does **not** get a clear error — the caster returns a `SOURCETABLE 200 OK` response instead of the data stream, which the node logs as a sourcetable/invalid-response error. If you see a sourcetable response for a mountpoint you know is valid, suspect a client-side block, not a bad mountpoint. The default `user_agent` (`NTRIP ros_ntrip_client`) is accepted; if you change it, keep the mandatory `NTRIP ` prefix and avoid the stock string.
+* **Request rate.** Use `ntrip_server_hz:=1` (the default) for rtk2go. Higher rates can get you banned.
+* **Persistent reconnect.** On any connection loss or failed initial connect, the node schedules a non-blocking reconnect and retries indefinitely. The wait starts at `reconnect_attempt_wait_seconds` (10s) and doubles on each failure up to `reconnect_attempt_wait_max_seconds` (default 120s), then holds at that ceiling. It never gives up, so the node recovers on its own from extended rtk2go outages (DDoS) or a mountpoint taken down for maintenance. To shrink your footprint during long outages, raise the ceiling (e.g. `reconnect_attempt_wait_max_seconds:=600`). Note: only the network client retries forever; the serial client retries a fixed number of times then exits.
 * **First-connect timeout is normal.** With rtk2go the very first connect attempt frequently times out and then succeeds on the first backoff retry, even on healthy connections. This is expected.
+
+### Known behavior: NMEA upload to a connected-but-silent mountpoint
+
+The dead-connection watchdog (`rtcm_timeout_seconds`) only arms **after the first RTCM packet arrives**. If a caster *accepts* the connection but then never delivers RTCM — e.g. a mountpoint that is **down for maintenance** while the caster still completes the GET request — the node believes it is connected and, if `send_nmea` is `true`, keeps uploading NMEA every cycle to a stream that is dead. On rtk2go this continuous upload to a silent mountpoint can trigger a ban.
+
+Mitigations by deployment type:
+
+* **Fixed-base mountpoints (e.g. rtk2go):** set `send_nmea:=false`. These mountpoints don't use your position, so no NMEA should be sent in the first place — this removes the problem at the source.
+* **VRS / virtual mountpoints:** NMEA is required (the network needs your position to synthesize the virtual base), so `send_nmea:=false` is not an option. The proper fix is to baseline the watchdog off the connect time so a connected-but-silent stream triggers reconnect even before the first packet. This is **not yet implemented** — left as documented behavior pending a VRS caster to validate against.
 
 ## Docker Integration
 
